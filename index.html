@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="description" content="لوحة تحكم متجر Queen Beauty لإدارة المنتجات والطلبات والمستخدمين">
+    <meta name="keywords" content="لوحة تحكم, متجر, إدارة, منتجات, طلبات">
+    <meta name="author" content="Queen Beauty">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://firebase.googleapis.com;">
+    <title>لوحة تحكم Queen Beauty</title>
+    
+    <!-- Firebase SDK (Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, collection, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot, serverTimestamp, addDoc, increment, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        window.firebaseModules = {
+            initializeApp,
+            getFirestore,
+            doc,
+            collection,
+            getDoc,
+            getDocs,
+            setDoc,
+            updateDoc,
+            deleteDoc,
+            addDoc,
+            query,
+            where,
+            orderBy,
+            onSnapshot,
+            serverTimestamp,
+            increment,
+            writeBatch,
+            runTransaction,
+            getStorage,
+            ref,
+            uploadBytesResumable,
+            getDownloadURL,
+            deleteObject,
+            getAuth,
+            onAuthStateChanged,
+            signOut
+        };
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    
+    <style>
+        /* Critical CSS for initial render */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f7f6;
+            direction: rtl;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .loading-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="spinner"></div>
+        <p style="margin-top: 20px; color: #555;">جاري تحميل لوحة التحكم...</p>
+    </div>
+
+    <!-- Main App Container (initially hidden) -->
+    <div id="appContainer" style="display: none;">
+        <!-- Header -->
+        <header class="admin-header" role="banner">
+            <div class="header-content">
+                <div class="header-logo" aria-label="Queen Beauty لوحة التحكم">
+                    <svg width="40" height="40" viewBox="0 0 100 100" aria-hidden="true">
+                        <circle cx="50" cy="50" r="45" fill="#555"/>
+                        <path d="M50,30 L65,70 L35,70 Z" fill="#fff"/>
+                        <circle cx="50" cy="40" r="8" fill="#fff"/>
+                    </svg>
+                    <span>لوحة تحكم Queen Beauty</span>
+                </div>
+                
+                <nav class="header-nav" role="navigation" aria-label="القائمة الرئيسية">
+                    <button class="nav-btn" onclick="AdminUI.goToStore()" aria-label="عرض المتجر">
+                        <i class="fas fa-external-link-alt"></i>
+                        <span>عرض المتجر</span>
+                    </button>
+                    <button class="nav-btn logout-btn" onclick="AuthService.logout()" aria-label="تسجيل الخروج">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>خروج</span>
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-container" role="main">
+            <!-- Tabs Navigation -->
+            <nav class="admin-tabs" role="tablist" aria-label="تبويبات لوحة التحكم">
+                <button class="admin-tab active" data-tab="dashboard" role="tab" aria-selected="true" aria-controls="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>الإحصائيات</span>
+                </button>
+                <button class="admin-tab" data-tab="products" role="tab" aria-selected="false" aria-controls="products">
+                    <i class="fas fa-boxes"></i>
+                    <span>المنتجات</span>
+                    <span id="productsBadge" class="badge hidden"></span>
+                </button>
+                <button class="admin-tab" data-tab="orders" role="tab" aria-selected="false" aria-controls="orders">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>الطلبات</span>
+                    <span id="ordersBadge" class="badge hidden"></span>
+                </button>
+                <button class="admin-tab" data-tab="users" role="tab" aria-selected="false" aria-controls="users">
+                    <i class="fas fa-users"></i>
+                    <span>المستخدمين</span>
+                </button>
+                <button class="admin-tab" data-tab="settings" role="tab" aria-selected="false" aria-controls="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>الإعدادات</span>
+                </button>
+            </nav>
+
+            <!-- Tab Contents -->
+            <div class="tab-contents">
+                <!-- Dashboard Tab -->
+                <section id="dashboard" class="tab-content active" role="tabpanel" aria-labelledby="dashboard-tab">
+                    <div class="section-header">
+                        <h1 class="section-title">لوحة الإحصائيات</h1>
+                        <button class="btn btn-secondary" onclick="StatsService.refreshStats()" aria-label="تحديث الإحصائيات">
+                            <i class="fas fa-sync-alt"></i>
+                            تحديث
+                        </button>
+                    </div>
+                    
+                    <div class="stats-grid" id="statsGrid">
+                        <!-- سيتم تعبئته بواسطة JavaScript -->
+                    </div>
+                    
+                    <div class="charts-section" id="chartsSection">
+                        <!-- الرسوم البيانية -->
+                    </div>
+                </section>
+
+                <!-- Products Tab -->
+                <section id="products" class="tab-content" role="tabpanel" aria-labelledby="products-tab" hidden>
+                    <div class="section-header">
+                        <h1 class="section-title">إدارة المنتجات</h1>
+                        <div class="header-actions">
+                            <div class="search-box">
+                                <input type="search" id="productSearch" placeholder="ابحث عن منتج..." aria-label="بحث في المنتجات">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <button class="btn btn-primary" onclick="ProductModal.openAddModal()" aria-label="إضافة منتج جديد">
+                                <i class="fas fa-plus"></i>
+                                إضافة منتج
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="filters-bar">
+                        <select id="productCategoryFilter" aria-label="فلترة حسب الفئة">
+                            <option value="">جميع الفئات</option>
+                            <option value="perfume">عطور</option>
+                            <option value="makeup">مكياج</option>
+                            <option value="skincare">عناية بالبشرة</option>
+                            <option value="haircare">عناية بالشعر</option>
+                        </select>
+                        
+                        <select id="productStatusFilter" aria-label="فلترة حسب الحالة">
+                            <option value="">جميع الحالات</option>
+                            <option value="active">نشط</option>
+                            <option value="inactive">غير نشط</option>
+                        </select>
+                        
+                        <select id="productSort" aria-label="ترتيب المنتجات">
+                            <option value="newest">الأحدث أولاً</option>
+                            <option value="oldest">الأقدم أولاً</option>
+                            <option value="price-high">الأعلى سعراً</option>
+                            <option value="price-low">الأقل سعراً</option>
+                            <option value="name">حسب الاسم</option>
+                        </select>
+                    </div>
+                    
+                    <div class="products-container">
+                        <div class="products-grid" id="productsGrid">
+                            <!-- سيتم تعبئته بواسطة JavaScript -->
+                        </div>
+                        <div class="pagination" id="productsPagination" role="navigation" aria-label="تنقل بين صفحات المنتجات">
+                            <!-- سيتم تعبئته بواسطة JavaScript -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Orders Tab -->
+                <section id="orders" class="tab-content" role="tabpanel" aria-labelledby="orders-tab" hidden>
+                    <div class="section-header">
+                        <h1 class="section-title">إدارة الطلبات</h1>
+                        <div class="header-actions">
+                            <div class="search-box">
+                                <input type="search" id="orderSearch" placeholder="ابحث برقم الطلب..." aria-label="بحث في الطلبات">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <button class="btn btn-secondary" onclick="OrderService.exportOrders()" aria-label="تصدير الطلبات">
+                                <i class="fas fa-download"></i>
+                                تصدير
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="filters-bar">
+                        <select id="orderStatusFilter" aria-label="فلترة حسب حالة الطلب">
+                            <option value="">جميع الحالات</option>
+                            <option value="pending">قيد الانتظار</option>
+                            <option value="confirmed">مؤكد</option>
+                            <option value="processing">قيد التجهيز</option>
+                            <option value="shipped">تم الشحن</option>
+                            <option value="delivered">تم التوصيل</option>
+                            <option value="cancelled">ملغي</option>
+                            <option value="refunded">مسترجع</option>
+                        </select>
+                        
+                        <input type="date" id="orderDateFrom" aria-label="تاريخ البداية">
+                        <span>إلى</span>
+                        <input type="date" id="orderDateTo" aria-label="تاريخ النهاية">
+                    </div>
+                    
+                    <div class="orders-container">
+                        <div class="orders-list" id="ordersList">
+                            <!-- سيتم تعبئته بواسطة JavaScript -->
+                        </div>
+                        <div class="pagination" id="ordersPagination" role="navigation" aria-label="تنقل بين صفحات الطلبات">
+                            <!-- سيتم تعبئته بواسطة JavaScript -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Users Tab -->
+                <section id="users" class="tab-content" role="tabpanel" aria-labelledby="users-tab" hidden>
+                    <div class="section-header">
+                        <h1 class="section-title">إدارة المستخدمين</h1>
+                        <div class="header-actions">
+                            <div class="search-box">
+                                <input type="search" id="userSearch" placeholder="ابحث عن مستخدم..." aria-label="بحث في المستخدمين">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="users-container">
+                        <div class="users-list" id="usersList">
+                            <!-- سيتم تعبئته بواسطة JavaScript -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Settings Tab -->
+                <section id="settings" class="tab-content" role="tabpanel" aria-labelledby="settings-tab" hidden>
+                    <div class="section-header">
+                        <h1 class="section-title">إعدادات الموقع</h1>
+                        <div class="header-actions">
+                            <button class="btn btn-secondary" onclick="SettingsService.resetToDefaults()" aria-label="استعادة الإعدادات الافتراضية">
+                                <i class="fas fa-undo"></i>
+                                إعادة تعيين
+                            </button>
+                            <button class="btn btn-primary" onclick="SettingsService.saveAllSettings()" aria-label="حفظ جميع الإعدادات">
+                                <i class="fas fa-save"></i>
+                                حفظ الكل
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-tabs">
+                        <button class="settings-tab active" data-settings-tab="general">عام</button>
+                        <button class="settings-tab" data-settings-tab="shipping">الشحن</button>
+                        <button class="settings-tab" data-settings-tab="payment">الدفع</button>
+                        <button class="settings-tab" data-settings-tab="social">التواصل</button>
+                        <button class="settings-tab" data-settings-tab="advanced">متقدم</button>
+                    </div>
+                    
+                    <div class="settings-content" id="settingsContent">
+                        <!-- سيتم تعبئته بواسطة JavaScript -->
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="admin-footer" role="contentinfo">
+            <div class="footer-content">
+                <p>© <span id="currentYear"></span> Queen Beauty. جميع الحقوق محفوظة.</p>
+                <div class="footer-links">
+                    <span id="connectionStatus" class="status-online">
+                        <i class="fas fa-circle"></i>
+                        متصل
+                    </span>
+                    <span>الإصدار 2.0.0</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <div id="productModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="productModalTitle" hidden>
+        <!-- سيتم تحميله ديناميكياً -->
+    </div>
+
+    <div id="imageUploadModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="imageUploadTitle" hidden>
+        <!-- سيتم تحميله ديناميكياً -->
+    </div>
+
+    <div id="confirmModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle" hidden>
+        <!-- سيتم تحميله ديناميكياً -->
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- JavaScript Files -->
+    <script src="js/constants.js"></script>
+    <script src="js/ui-helpers.js"></script>
+    <script src="js/firebase-service.js"></script>
+    <script src="js/product-service.js"></script>
+    <script src="js/order-service.js"></script>
+    <script src="js/user-service.js"></script>
+    <script src="js/settings-service.js"></script>
+    <script src="js/main.js"></script>
+
+    <!-- Fallback for JavaScript disabled -->
+    <noscript>
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 10000; display: flex; justify-content: center; align-items: center; text-align: center; padding: 20px;">
+            <div>
+                <h1 style="color: #d32f2f; margin-bottom: 20px;">⚠️ JavaScript غير مفعل</h1>
+                <p style="margin-bottom: 20px;">لوحة التحكم تحتاج إلى JavaScript للعمل بشكل صحيح.</p>
+                <p>يرجى تفعيل JavaScript في متصفحك ثم إعادة تحميل الصفحة.</p>
+            </div>
+        </div>
+    </noscript>
+</body>
+</html>

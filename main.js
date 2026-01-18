@@ -145,7 +145,7 @@ let isGuest = false;
 let isAdmin = false;
 let isLoading = false;
 let appInitialized = false;
-let cartItems = JSON.parse(localStorage.getItem('cart')) || [];
+let cartItems = [];
 let favorites = [];
 let allProducts = [];
 let siteCurrency = 'SDG ';
@@ -1228,7 +1228,7 @@ function updateCartDisplay() {
     updateCartSummary();
 }
 
-function updateCartQuantity(productId, change) {
+async function updateCartQuantity(productId, change) {
     const item = cartItems.find(item => item.id === productId);
     if (!item) return;
     
@@ -1249,9 +1249,10 @@ function updateCartQuantity(productId, change) {
     localStorage.setItem('cart', JSON.stringify(cartItems));
     updateCartCount();
     updateCartDisplay();
+    await saveUserDataToFirestore();
 }
 
-function removeFromCart(productId) {
+async function removeFromCart(productId) {
     if (!confirm('هل تريد إزالة هذا المنتج من السلة؟')) return;
     
     cartItems = cartItems.filter(item => item.id !== productId);
@@ -1259,6 +1260,7 @@ function removeFromCart(productId) {
     updateCartCount();
     updateCartDisplay();
     showToast('تم إزالة المنتج من السلة', 'info');
+    await saveUserDataToFirestore();
 }
 
 function updateCartSummary() {
@@ -1305,7 +1307,7 @@ function updateCartSummary() {
     }
 }
 
-function clearCart() {
+async function clearCart() {
     if (cartItems.length === 0) return;
     
     if (confirm('هل تريد تفريغ السلة بالكامل؟')) {
@@ -1314,6 +1316,7 @@ function clearCart() {
         updateCartCount();
         updateCartDisplay();
         showToast('تم تفريغ السلة', 'info');
+        await saveUserDataToFirestore();
     }
 }
 
@@ -1435,7 +1438,7 @@ async function uploadReceiptImage(file) {
             }
         };
 
-        // تحويل الملف إلى Blob لضمان التوافق مع متصفحات الهاتف وكروم
+        // تحويل الملف إلى Blob لضمان التوافق مع متصفحات الهاتف و Chrome
         const blob = new Blob([file], { type: file.type });
         console.log('📦 تم تحويل الملف إلى Blob بنجاح');
 
@@ -1594,8 +1597,7 @@ async function confirmOrder() {
     const phone = document.getElementById('orderPhone').value.trim();
     const address = document.getElementById('orderAddress').value.trim();
     const notes = document.getElementById('orderNotes').value.trim();
-    const receiptInput = document.getElementById('receiptInput');
-    const receiptFile = receiptInput ? receiptInput.files[0] : null;
+    const receiptFile = document.getElementById('receiptInput').files[0];
     
     confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري إرسال الطلب...';
     confirmBtn.disabled = true;
@@ -3067,13 +3069,10 @@ function adjustLayout() {
 // ======================== نافذة الدفع والطلب ========================
 
 function openCheckoutModal(isDirect = false) {
-    // السماح للضيوف بإكمال الطلب إذا كان النظام يدعم ذلك، أو التأكد من حالة المستخدم
-    if (isGuest && !siteSettings.allowGuestCheckout) {
-        // إذا كنت تريد إجبار المستخدم على تسجيل الدخول
-        // showToast('يرجى تسجيل الدخول لإتمام الطلب', 'warning');
-        // showAuthScreen();
-        // return;
-        console.log('Proceeding as guest...');
+    if (isGuest) {
+        showToast('يرجى تسجيل الدخول لإتمام الطلب', 'warning');
+        showAuthScreen();
+        return;
     }
 
     if (!isDirect && cartItems.length === 0) {

@@ -145,8 +145,8 @@ let isGuest = false;
 let isAdmin = false;
 let isLoading = false;
 let appInitialized = false;
-let cartItems = [];
-let favorites = [];
+let cartItems = JSON.parse(localStorage.getItem('cart')) || [];
+let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
 let allProducts = [];
 let siteCurrency = 'SDG ';
 let siteSettings = {};
@@ -1118,7 +1118,7 @@ function buyNowFromModal() {
 
 // ======================== إدارة السلة ========================
 
-function addToCartWithQuantity(productId, quantity = 1) {
+async function addToCartWithQuantity(productId, quantity = 1) {
     const product = allProducts.find(p => p.id === productId);
     if (!product) {
         showToast('المنتج غير موجود', 'error');
@@ -1130,18 +1130,9 @@ function addToCartWithQuantity(productId, quantity = 1) {
         return;
     }
     
-    if (quantity > product.stock) {
-        showToast(`الكمية المطلوبة غير متوفرة. المخزون الحالي: ${product.stock}`, 'warning');
-        return;
-    }
-    
     const existingItem = cartItems.find(item => item.id === productId);
     
     if (existingItem) {
-        if (existingItem.quantity + quantity > product.stock) {
-            showToast(`لا توجد كمية كافية في المخزون. المتاح: ${product.stock - existingItem.quantity}`, 'warning');
-            return;
-        }
         existingItem.quantity += quantity;
     } else {
         cartItems.push({
@@ -1158,12 +1149,16 @@ function addToCartWithQuantity(productId, quantity = 1) {
     localStorage.setItem('cart', JSON.stringify(cartItems));
     updateCartCount();
     
-    const cartSection = document.getElementById('cart');
-    if (cartSection && cartSection.classList.contains('active')) {
+    if (document.getElementById('cart').classList.contains('active')) {
         updateCartDisplay();
     }
     
-    showToast(`تمت إضافة ${quantity} من المنتج إلى السلة`, 'success');
+    showToast(`تمت إضافة المنتج إلى السلة`, 'success');
+    
+    // حفظ فوري في Firestore إذا كان المستخدم مسجلاً
+    if (currentUser && !isGuest) {
+        await saveUserDataToFirestore();
+    }
 }
 
 function updateCartCount() {
@@ -1430,17 +1425,12 @@ async function uploadReceiptImage(file) {
         }
         
         // رفع الملف مع إعدادات Metadata لتحسين التوافق
+        // Metadata إلزامي لمتصفح Chrome لضمان استقرار الرفع
         const metadata = {
-            contentType: file.type,
-            customMetadata: {
-                'originalName': file.name,
-                'uploadedFrom': 'MobileApp'
-            }
+            contentType: file.type || 'image/jpeg'
         };
 
-        // استخدام File مباشر كما هو مطلوب
-        console.log('📦 البدء برفع الملف المباشر (File)');
-
+        console.log('🚀 بدء رفع الإيصال لمتصفح Chrome:', file.name);
         const uploadTask = window.firebaseModules.uploadBytesResumable(storageRef, file, metadata);
         
         return new Promise((resolve, reject) => {
@@ -3194,9 +3184,27 @@ async function syncUserDataFromFirestore() {
         const userSnap = await window.firebaseModules.getDoc(userRef);
         if (userSnap.exists()) {
             const data = userSnap.data();
-            cartItems = data.cart || [];
-            favorites = data.favorites || [];
+            // دمج البيانات المحلية مع السحابية لضمان عدم فقدان أي شيء
+            const cloudCart = data.cart || [];
+            const localCart = JSON.parse(localStorage.getItem('cart')) || [];
+            
+            // إذا كانت السلة السحابية أحدث أو تحتوي بيانات، نعتمدها، وإلا نعتمد المحلية
+            if (cloudCart.length > 0) {
+                cartItems = cloudCart;
+            } else {
+                cartItems = localCart;
+            }
+            
+            favorites = data.favorites || JSON.parse(localStorage.getItem('favorites')) || [];
+            
+            localStorage.setItem('cart', JSON.stringify(cartItems));
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+            
             console.log('✅ تم مزامنة البيانات من السحابة');
+            updateCartCount();
+            if (document.getElementById('cart').classList.contains('active')) {
+                updateCartDisplay();
+            }
         }
     } catch (error) {
         console.error('❌ خطأ في مزامنة البيانات:', error);

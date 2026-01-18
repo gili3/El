@@ -1,5 +1,5 @@
-// main.js - النسخة المعدلة بالكامل مع إصلاح جميع المشاكل
-// جميع الدوال مدمجة ومعالجة جميع المشاكل
+// main.js - النسخة الكاملة بدون PWA
+// جميع الوظائف الأساسية تعمل بشكل كامل
 
 // ======================== تهيئة التطبيق ========================
 
@@ -45,7 +45,7 @@ function showLoadingSpinner(message = 'جاري التحميل...') {
         color: white; font-family: 'Cairo';
     `;
     spinner.innerHTML = `
-        <div class="loader-spinner" style="width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <div class="loader-spinner" style="width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid #555555; border-radius: 50%; animation: spin 1s linear infinite;"></div>
         <p style="margin-top: 15px;">${message}</p>
     `;
     document.body.appendChild(spinner);
@@ -145,13 +145,13 @@ let isGuest = false;
 let isAdmin = false;
 let isLoading = false;
 let appInitialized = false;
-let cartItems = JSON.parse(localStorage.getItem('cart')) || [];
-let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+let cartItems = [];
+let favorites = [];
 let allProducts = [];
 let siteCurrency = 'SDG ';
 let siteSettings = {};
 let selectedProductForQuantity = null;
-let directPurchaseItem = null; // إضافة المتغير المفقود
+let directPurchaseItem = null;
 let lastScrollTop = 0;
 let app, auth, db;
 
@@ -197,13 +197,13 @@ function checkFirebaseSDK() {
             loader.innerHTML = `
                 <div style="text-align: center; padding: 30px;">
                     <i class="fas fa-exclamation-triangle fa-3x" style="color: #f39c12; margin-bottom: 20px;"></i>
-                    <h3 style="color: var(--primary-color); margin-bottom: 10px;">خطأ في الاتصال</h3>
-                    <p style="color: var(--gray-color); margin-bottom: 20px;">تعذر تحميل المكتبات المطلوبة. يرجى:</p>
+                    <h3 style="color: #555555; margin-bottom: 10px;">خطأ في الاتصال</h3>
+                    <p style="color: #666; margin-bottom: 20px;">تعذر تحميل المكتبات المطلوبة. يرجى:</p>
                     <div style="display: flex; gap: 10px; justify-content: center;">
-                        <button onclick="window.location.reload()" style="padding: 10px 20px; background: var(--secondary-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-family: 'Cairo';">
+                        <button onclick="window.location.reload()" style="padding: 10px 20px; background: #c9a24d; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: 'Cairo';">
                             <i class="fas fa-redo"></i> تحديث الصفحة
                         </button>
-                        <button onclick="signInAsGuest()" style="padding: 10px 20px; background: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-family: 'Cairo';">
+                        <button onclick="signInAsGuest()" style="padding: 10px 20px; background: #555555; color: white; border: none; border-radius: 8px; cursor: pointer; font-family: 'Cairo';">
                             <i class="fas fa-user"></i> الدخول كضيف
                         </button>
                     </div>
@@ -247,28 +247,6 @@ function initializeFirebase() {
             console.error('❌ فشل استرداد مثيل Firebase');
             return null;
         }
-    }
-}
-
-// ======================== دوال الاتصال بقاعدة البيانات ========================
-
-async function checkDatabaseConnection() {
-    try {
-        if (!db) {
-            console.log('🔄 تهيئة قاعدة البيانات...');
-            const firebase = initializeFirebase();
-            if (!firebase) throw new Error('تعذر تهيئة Firebase');
-            return true;
-        }
-        
-        // اختبار اتصال بسيط
-        const testRef = window.firebaseModules.collection(db, "settings");
-        const test = await window.firebaseModules.getDocs(testRef);
-        console.log('✅ اتصال قاعدة البيانات نشط');
-        return true;
-    } catch (error) {
-        console.error('❌ خطأ في اتصال قاعدة البيانات:', error);
-        return false;
     }
 }
 
@@ -565,9 +543,6 @@ async function signUpWithEmail(email, password, name, phone = '') {
         
         console.log('✅ تم إنشاء حساب المستخدم بنجاح في قاعدة البيانات');
         
-        // إزالة التخزين المحلي للمستخدم
-        console.log('User data saved to memory and Firestore');
-        
         showMainApp();
         showSection('home');
         updateUserProfile();
@@ -811,15 +786,12 @@ async function signOutUser() {
             if (!confirm('سيتم فقدان سلة التسوق والطلبات. هل تريد المتابعة؟')) {
                 return;
             }
-            // إزالة التخزين المحلي
         }
         
         if (!isGuest && auth) {
             await window.firebaseModules.signOut(auth);
         }
         
-        // إزالة التخزين المحلي للمستخدم
-        console.log('User signed out, memory cleared');
         currentUser = null;
         isGuest = false;
         isAdmin = false;
@@ -867,21 +839,6 @@ function applyThemeColors(colors) {
     }
     if (colors.secondaryColor) {
         root.style.setProperty('--secondary-color', colors.secondaryColor);
-    }
-    if (colors.successColor) {
-        root.style.setProperty('--success-color', colors.successColor);
-    }
-    if (colors.dangerColor) {
-        root.style.setProperty('--danger-color', colors.dangerColor);
-    }
-    if (colors.warningColor) {
-        root.style.setProperty('--warning-color', colors.warningColor);
-    }
-    if (colors.lightColor) {
-        root.style.setProperty('--light-color', colors.lightColor);
-    }
-    if (colors.buttonPressColor) {
-        root.style.setProperty('--button-press-color', colors.buttonPressColor);
     }
 }
 
@@ -956,9 +913,9 @@ function displayNoProductsMessage() {
     
     const message = `
         <div style="text-align: center; padding: 40px 20px; width: 100%;">
-            <i class="fas fa-box-open fa-3x" style="color: var(--gray-color); margin-bottom: 20px;"></i>
-            <h3 style="color: var(--primary-color); margin-bottom: 10px;">لا توجد منتجات متاحة</h3>
-            <p style="color: var(--gray-color);">سيتم إضافة المنتجات قريباً</p>
+            <i class="fas fa-box-open fa-3x" style="color: #666; margin-bottom: 20px;"></i>
+            <h3 style="color: #555555; margin-bottom: 10px;">لا توجد منتجات متاحة</h3>
+            <p style="color: #666;">سيتم إضافة المنتجات قريباً</p>
         </div>
     `;
     
@@ -1064,9 +1021,9 @@ function filterMainProducts(filterType, btn) {
         tab.style.borderColor = '#ddd';
     });
     
-    btn.style.background = 'var(--primary-color)';
+    btn.style.background = '#555555';
     btn.style.color = 'white';
-    btn.style.borderColor = 'var(--primary-color)';
+    btn.style.borderColor = '#555555';
     
     let filtered;
     if (filterType === 'all') {
@@ -1118,7 +1075,7 @@ function buyNowFromModal() {
 
 // ======================== إدارة السلة ========================
 
-async function addToCartWithQuantity(productId, quantity = 1) {
+function addToCartWithQuantity(productId, quantity = 1) {
     const product = allProducts.find(p => p.id === productId);
     if (!product) {
         showToast('المنتج غير موجود', 'error');
@@ -1130,9 +1087,18 @@ async function addToCartWithQuantity(productId, quantity = 1) {
         return;
     }
     
+    if (quantity > product.stock) {
+        showToast(`الكمية المطلوبة غير متوفرة. المخزون الحالي: ${product.stock}`, 'warning');
+        return;
+    }
+    
     const existingItem = cartItems.find(item => item.id === productId);
     
     if (existingItem) {
+        if (existingItem.quantity + quantity > product.stock) {
+            showToast(`لا توجد كمية كافية في المخزون. المتاح: ${product.stock - existingItem.quantity}`, 'warning');
+            return;
+        }
         existingItem.quantity += quantity;
     } else {
         cartItems.push({
@@ -1149,16 +1115,12 @@ async function addToCartWithQuantity(productId, quantity = 1) {
     localStorage.setItem('cart', JSON.stringify(cartItems));
     updateCartCount();
     
-    if (document.getElementById('cart').classList.contains('active')) {
+    const cartSection = document.getElementById('cart');
+    if (cartSection && cartSection.classList.contains('active')) {
         updateCartDisplay();
     }
     
-    showToast(`تمت إضافة المنتج إلى السلة`, 'success');
-    
-    // حفظ فوري في Firestore إذا كان المستخدم مسجلاً
-    if (currentUser && !isGuest) {
-        await saveUserDataToFirestore();
-    }
+    showToast(`تمت إضافة ${quantity} من المنتج إلى السلة`, 'success');
 }
 
 function updateCartCount() {
@@ -1223,7 +1185,7 @@ function updateCartDisplay() {
     updateCartSummary();
 }
 
-async function updateCartQuantity(productId, change) {
+function updateCartQuantity(productId, change) {
     const item = cartItems.find(item => item.id === productId);
     if (!item) return;
     
@@ -1244,10 +1206,9 @@ async function updateCartQuantity(productId, change) {
     localStorage.setItem('cart', JSON.stringify(cartItems));
     updateCartCount();
     updateCartDisplay();
-    await saveUserDataToFirestore();
 }
 
-async function removeFromCart(productId) {
+function removeFromCart(productId) {
     if (!confirm('هل تريد إزالة هذا المنتج من السلة؟')) return;
     
     cartItems = cartItems.filter(item => item.id !== productId);
@@ -1255,7 +1216,6 @@ async function removeFromCart(productId) {
     updateCartCount();
     updateCartDisplay();
     showToast('تم إزالة المنتج من السلة', 'info');
-    await saveUserDataToFirestore();
 }
 
 function updateCartSummary() {
@@ -1302,7 +1262,7 @@ function updateCartSummary() {
     }
 }
 
-async function clearCart() {
+function clearCart() {
     if (cartItems.length === 0) return;
     
     if (confirm('هل تريد تفريغ السلة بالكامل؟')) {
@@ -1311,11 +1271,10 @@ async function clearCart() {
         updateCartCount();
         updateCartDisplay();
         showToast('تم تفريغ السلة', 'info');
-        await saveUserDataToFirestore();
     }
 }
 
-// ======================== دالة معاينة الإيصال المحسنة ========================
+// ======================== دالة معاينة الإيصال ========================
 
 function previewReceipt(input) {
     const preview = document.getElementById('receiptPreviewContainer');
@@ -1377,7 +1336,7 @@ function previewReceipt(input) {
     }
 }
 
-// ======================== دالة رفع الصورة المحسنة ========================
+// ======================== دالة رفع الصورة ========================
 
 async function uploadReceiptImage(file) {
     console.log('🚀 بدء عملية الرفع للملف:', file.name, 'الحجم:', file.size, 'النوع:', file.type);
@@ -1425,12 +1384,14 @@ async function uploadReceiptImage(file) {
         }
         
         // رفع الملف مع إعدادات Metadata لتحسين التوافق
-        // Metadata إلزامي لمتصفح Chrome لضمان استقرار الرفع
         const metadata = {
-            contentType: file.type || 'image/jpeg'
+            contentType: file.type,
+            customMetadata: {
+                'originalName': file.name,
+                'uploadedFrom': 'MobileApp'
+            }
         };
 
-        console.log('🚀 بدء رفع الإيصال لمتصفح Chrome:', file.name);
         const uploadTask = window.firebaseModules.uploadBytesResumable(storageRef, file, metadata);
         
         return new Promise((resolve, reject) => {
@@ -1455,7 +1416,7 @@ async function uploadReceiptImage(file) {
                     else if (error.code === 'storage/retry-limit-exceeded') msg += 'فشل الاتصال المتكرر';
                     else msg += error.message;
                     
-                    alert(msg); // استخدام alert لضمان رؤية الخطأ على الهاتف
+                    alert(msg);
                     reject(error);
                 },
                 async () => {
@@ -1528,65 +1489,25 @@ function removeReceiptPreview() {
     }
 }
 
-// ======================== دالة التحقق قبل الطلب ========================
-
-async function validateOrderBeforeSubmit() {
-    // 1. التحقق من اتصال Firebase
-    const isConnected = await checkDatabaseConnection();
-    if (!isConnected) {
-        showToast('تعذر الاتصال بالخادم. يرجى المحاولة مرة أخرى', 'error');
-        return false;
-    }
-    
-    // 2. التحقق من السلة أو الشراء المباشر
-    if (!directPurchaseItem && cartItems.length === 0) {
-        showToast('السلة فارغة', 'warning');
-        return false;
-    }
-    
-    // 3. التحقق من رقم الهاتف - إجباري
-    const phone = document.getElementById('orderPhone')?.value.trim();
-    if (!phone) {
-        showToast('يرجى إدخال رقم الهاتف', 'warning');
-        return false;
-    }
-    if (!isValidPhone(phone)) {
-        showToast('يرجى إدخال رقم هاتف صحيح', 'warning');
-        return false;
-    }
-    
-    // 4. التحقق من الإيصال
-    const receiptFile = document.getElementById('receiptInput')?.files[0];
-    if (!receiptFile) {
-        showToast('يرجى رفع صورة إيصال التحويل', 'warning');
-        return false;
-    }
-    
-    // 5. التحقق من Storage
-    if (!firebaseStorage) {
-        const firebase = initializeFirebase();
-        if (!firebase || !firebase.storage) {
-            showToast('تعذر تهيئة خدمة التخزين', 'error');
-            return false;
-        }
-        firebaseStorage = firebase.storage;
-    }
-    
-    return true;
-}
-
-// ======================== دالة تأكيد الطلب المعدلة ========================
+// ======================== دالة تأكيد الطلب ========================
 
 async function confirmOrder() {
-    // التحقق قبل الإرسال
-    const isValid = await validateOrderBeforeSubmit();
-    if (!isValid) return;
-    
     const confirmBtn = document.getElementById('confirmOrderBtn');
     const phone = document.getElementById('orderPhone').value.trim();
     const address = document.getElementById('orderAddress').value.trim();
     const notes = document.getElementById('orderNotes').value.trim();
     const receiptFile = document.getElementById('receiptInput').files[0];
+    
+    // التحقق من البيانات
+    if (!phone) {
+        showToast('يرجى إدخال رقم الهاتف', 'warning');
+        return;
+    }
+    
+    if (!receiptFile) {
+        showToast('يرجى رفع صورة إيصال التحويل', 'warning');
+        return;
+    }
     
     confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري إرسال الطلب...';
     confirmBtn.disabled = true;
@@ -1599,7 +1520,7 @@ async function confirmOrder() {
             }
         }
         
-        // 2. رفع صورة الإيصال باستخدام الدالة المحسنة
+        // 2. رفع صورة الإيصال
         let receiptData = null;
         if (receiptFile) {
             showToast('جاري رفع صورة الإيصال...', 'info');
@@ -1701,10 +1622,7 @@ async function confirmOrder() {
             localStorage.setItem('guest_orders', JSON.stringify(guestOrders));
         }
         
-        // 9. إرسال إشعار طلب جديد للمدير
-        await sendAdminOrderNotification(orderData);
-        
-        // 10. تنظيف السلة أو الشراء المباشر وإظهار رسالة النجاح
+        // 9. تنظيف السلة أو الشراء المباشر وإظهار رسالة النجاح
         if (directPurchaseItem) {
             directPurchaseItem = null;
         } else {
@@ -1716,7 +1634,7 @@ async function confirmOrder() {
         
         showSuccessOrderMessage(orderId);
         
-        // 11. تحديث قسم الطلبات إذا كان مفتوحاً
+        // 10. تحديث قسم الطلبات إذا كان مفتوحاً
         if (document.getElementById('my-orders').classList.contains('active')) {
             setTimeout(() => loadMyOrders(), 1000);
         }
@@ -1749,46 +1667,16 @@ async function confirmOrder() {
     }
 }
 
-// ======================== نظام إشعارات الطلبات ========================
-
-async function sendAdminOrderNotification(orderData) {
-    try {
-        if (!db) return;
-        
-        const notificationsRef = window.firebaseModules.collection(db, "notifications");
-        await window.firebaseModules.addDoc(notificationsRef, {
-            type: 'new_order',
-            title: 'طلب جديد!',
-            message: `طلب جديد #${orderData.orderId} من ${orderData.customerName} بقيمة ${formatNumber(orderData.total)} ${siteCurrency}`,
-            orderId: orderData.orderId,
-            orderData: {
-                customerName: orderData.customerName,
-                total: orderData.total,
-                itemsCount: orderData.items.length,
-                status: orderData.status
-            },
-            read: false,
-            priority: 'high',
-            createdAt: window.firebaseModules.serverTimestamp()
-        });
-        
-        console.log('🔔 تم إرسال إشعار طلب جديد للمدير');
-        
-    } catch (error) {
-        console.error('❌ خطأ في إرسال إشعار الطلب:', error);
-    }
-}
-
 function showSuccessOrderMessage(orderId) {
     const message = `
         <div style="text-align: center; padding: 40px 20px;">
-            <i class="fas fa-check-circle" style="color: var(--success-color); font-size: 60px; margin-bottom: 20px;"></i>
-            <h3 style="color: var(--primary-color); margin-bottom: 15px;">تم إرسال طلبك بنجاح!</h3>
-            <div style="background: var(--light-color); padding: 20px; border-radius: 10px; margin-bottom: 25px; border: 1px solid var(--border-color);">
+            <i class="fas fa-check-circle" style="color: #27ae60; font-size: 60px; margin-bottom: 20px;"></i>
+            <h3 style="color: #555555; margin-bottom: 15px;">تم إرسال طلبك بنجاح!</h3>
+            <div style="background: #f9f9f9; padding: 20px; border-radius: 10px; margin-bottom: 25px; border: 1px solid #ddd;">
                 <p style="margin-bottom: 10px;"><strong>رقم طلبك:</strong></p>
-                <h2 style="color: var(--secondary-color); margin: 0;">${orderId}</h2>
+                <h2 style="color: #c9a24d; margin: 0;">${orderId}</h2>
             </div>
-            <p style="color: var(--gray-color); margin-bottom: 20px; line-height: 1.6;">
+            <p style="color: #666; margin-bottom: 20px; line-height: 1.6;">
                 <i class="fas fa-info-circle"></i>
                 تم استلام طلبك بنجاح وسيتم مراجعته خلال 24 ساعة.<br>
                 سيتم التواصل معك على رقم الهاتف المسجل لتأكيد الطلب.
@@ -1877,7 +1765,7 @@ async function loadMyOrders() {
                             ${order.notes ? `<p><strong>ملاحظات:</strong> ${order.notes}</p>` : ''}
                             <p><strong>طريقة الدفع:</strong> تحويل بنكي</p>
                             ${hasReceipt ? `
-                                <p><strong>حالة الإيصال:</strong> <span style="color: var(--success-color);">✓ مرفق</span></p>
+                                <p><strong>حالة الإيصال:</strong> <span style="color: #27ae60;">✓ مرفق</span></p>
                             ` : ''}
                         </div>
                         <div class="order-items">
@@ -1910,9 +1798,9 @@ async function loadMyOrders() {
     if (!currentUser) {
         ordersList.innerHTML = `
             <div style="text-align: center; padding: 40px 20px;">
-                <i class="fas fa-user-clock fa-3x" style="color: var(--gray-color); margin-bottom: 20px;"></i>
-                <h3 style="color: var(--primary-color); margin-bottom: 10px;">الدخول مطلوب</h3>
-                <p style="color: var(--gray-color); margin-bottom: 20px;">يجب تسجيل الدخول لعرض الطلبات السابقة</p>
+                <i class="fas fa-user-clock fa-3x" style="color: #666; margin-bottom: 20px;"></i>
+                <h3 style="color: #555555; margin-bottom: 10px;">الدخول مطلوب</h3>
+                <p style="color: #666; margin-bottom: 20px;">يجب تسجيل الدخول لعرض الطلبات السابقة</p>
                 <button onclick="showAuthScreen()" class="btn-primary" style="padding: 12px 25px;">
                     <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
                 </button>
@@ -2040,7 +1928,7 @@ async function loadMyOrders() {
                             ${order.notes ? `<p><strong>ملاحظات:</strong> ${order.notes}</p>` : ''}
                             <p><strong>طريقة الدفع:</strong> تحويل بنكي</p>
                             ${hasReceipt ? `
-                                <p><strong>حالة الإيصال:</strong> <span style="color: var(--success-color);">✓ مرفق</span></p>
+                                <p><strong>حالة الإيصال:</strong> <span style="color: #27ae60;">✓ مرفق</span></p>
                             ` : ''}
                         </div>
                         <div class="order-items">
@@ -2071,7 +1959,7 @@ async function loadMyOrders() {
     } catch (error) {
         console.error('Error loading orders:', error);
         ordersList.innerHTML = `
-            <div style="text-align: center; padding: 40px 20px; color: var(--danger-color);">
+            <div style="text-align: center; padding: 40px 20px; color: #e74c3c;">
                 <i class="fas fa-exclamation-triangle fa-3x" style="margin-bottom: 20px;"></i>
                 <h3>حدث خطأ أثناء تحميل الطلبات</h3>
                 <p>${error.message}</p>
@@ -2196,7 +2084,6 @@ function toggleFavorite(productId) {
         showToast('تم إزالة المنتج من المفضلة', 'info');
     }
     
-    // إزالة التخزين المحلي
     if (currentUser && !isGuest) {
         saveUserDataToFirestore();
     }
@@ -2255,7 +2142,7 @@ function updateFavoritesDisplay() {
                         <span class="current-price">${formatNumber(product.price)} ${siteCurrency}</span>
                     </div>
                     <div class="product-actions">
-                        <button class="action-btn add-to-cart" onclick="openQuantityModal('${product.id}')" style="background: var(--secondary-color); color: white; border-color: var(--secondary-color);">
+                        <button class="action-btn add-to-cart" onclick="openQuantityModal('${product.id}')" style="background: #c9a24d; color: white; border-color: #c9a24d;">
                             <i class="fas fa-bolt"></i> شراء مباشر
                         </button>
                         <button class="action-btn favorite-btn active" onclick="toggleFavorite('${product.id}')">
@@ -2531,17 +2418,6 @@ function updateUIWithSettings() {
         aboutEl.textContent = siteSettings.aboutUs;
     }
     
-    const socialContainer = document.querySelector('.footer-social') || document.querySelector('.social-links');
-    if (socialContainer) {
-        let socialHTML = '';
-        if (siteSettings.whatsappUrl) socialHTML += `<a href="${siteSettings.whatsappUrl}" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>`;
-        if (siteSettings.instagramUrl) socialHTML += `<a href="${siteSettings.instagramUrl}" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>`;
-        if (siteSettings.facebookUrl) socialHTML += `<a href="${siteSettings.facebookUrl}" target="_blank" title="Facebook"><i class="fab fa-facebook"></i></a>`;
-        if (siteSettings.tiktokUrl) socialHTML += `<a href="${siteSettings.tiktokUrl}" target="_blank" title="TikTok"><i class="fab fa-tiktok"></i></a>`;
-        
-        if (socialHTML) socialContainer.innerHTML = socialHTML;
-    }
-
     if (siteSettings.logoUrl) {
         const logoElements = [
             document.getElementById('siteLogo'),
@@ -2910,7 +2786,6 @@ async function handleLogin() {
 
 function setupSmartHeader() {
     const header = document.querySelector('.header');
-    const backToTopBtn = document.getElementById('backToTop');
     if (!header) return;
 
     window.addEventListener('scroll', function() {
@@ -2922,24 +2797,10 @@ function setupSmartHeader() {
             header.style.transform = 'translateY(0)';
         }
         
-        if (backToTopBtn) {
-            if (scrollTop > 500) {
-                backToTopBtn.style.display = 'block';
-            } else {
-                backToTopBtn.style.display = 'none';
-            }
-        }
-        
         lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
     }, { passive: true });
     
     header.style.transition = 'transform 0.3s ease-in-out';
-    
-    if (backToTopBtn) {
-        backToTopBtn.addEventListener('click', () => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    }
 }
 
 function showAuthScreen() {
@@ -3174,8 +3035,9 @@ window.uploadReceiptImage = uploadReceiptImage;
 
 window.addEventListener('resize', adjustLayout);
 
-console.log('🚀 تطبيق Queen Beauty المعدل جاهز للعمل 100%!');
-// ======================== نظام المزامنة السحابية (بديل التخزين المحلي) ========================
+console.log('🚀 تطبيق Queen Beauty جاهز للعمل 100%!');
+
+// ======================== نظام المزامنة السحابية ========================
 
 async function syncUserDataFromFirestore() {
     if (!currentUser || isGuest) return;
@@ -3184,27 +3046,9 @@ async function syncUserDataFromFirestore() {
         const userSnap = await window.firebaseModules.getDoc(userRef);
         if (userSnap.exists()) {
             const data = userSnap.data();
-            // دمج البيانات المحلية مع السحابية لضمان عدم فقدان أي شيء
-            const cloudCart = data.cart || [];
-            const localCart = JSON.parse(localStorage.getItem('cart')) || [];
-            
-            // إذا كانت السلة السحابية أحدث أو تحتوي بيانات، نعتمدها، وإلا نعتمد المحلية
-            if (cloudCart.length > 0) {
-                cartItems = cloudCart;
-            } else {
-                cartItems = localCart;
-            }
-            
-            favorites = data.favorites || JSON.parse(localStorage.getItem('favorites')) || [];
-            
-            localStorage.setItem('cart', JSON.stringify(cartItems));
-            localStorage.setItem('favorites', JSON.stringify(favorites));
-            
+            cartItems = data.cart || [];
+            favorites = data.favorites || [];
             console.log('✅ تم مزامنة البيانات من السحابة');
-            updateCartCount();
-            if (document.getElementById('cart').classList.contains('active')) {
-                updateCartDisplay();
-            }
         }
     } catch (error) {
         console.error('❌ خطأ في مزامنة البيانات:', error);
@@ -3226,263 +3070,3 @@ async function saveUserDataToFirestore() {
     }
 }
 
-// تعديل دوال الإضافة للسلة والمفضلة لتستخدم المزامنة السحابية
-const originalAddToCart = window.addToCart;
-window.addToCart = async function(productId, quantity) {
-    // تنفيذ الكود الأصلي أولاً (يفترض أنه يعدل cartItems)
-    // ثم نقوم بالحفظ في Firestore
-    setTimeout(async () => {
-        await saveUserDataToFirestore();
-    }, 500);
-};
-
-const originalToggleFavorite = window.toggleFavorite;
-window.toggleFavorite = async function(productId) {
-    setTimeout(async () => {
-        await saveUserDataToFirestore();
-    }, 500);
-};
-
-// ======================== الميزات الجديدة المضافة (تطوير Manus) ========================
-
-
-
-function getRatingHTML(rating = 5) {
-    let html = '<div class="product-rating" style="color: #f1c40f; font-size: 12px; margin: 5px 0;">';
-    for (let i = 1; i <= 5; i++) html += `<i class="${i <= rating ? 'fas' : 'far'} fa-star"></i>`;
-    html += '</div>';
-    return html;
-}
-
-window.shareProduct = function(productId) {
-    const product = allProducts.find(p => p.id === productId);
-    if (!product) return;
-    const text = `شاهد هذا المنتج: ${product.name}\nالسعر: ${product.price} ${siteCurrency}`;
-    if (navigator.share) navigator.share({ title: product.name, text: text, url: window.location.href });
-    else window.open(`https://wa.me/?text=${encodeURIComponent(text + '\n' + window.location.href)}`);
-};
-
-let activeCoupon = null;
-window.applyCoupon = async function() {
-    const code = document.getElementById('couponCode')?.value?.trim()?.toUpperCase();
-    if (!code) return showToast('أدخل كود الخصم', 'warning');
-    showLoadingSpinner('جاري التحقق...');
-    try {
-        const q = window.firebaseModules.query(window.firebaseModules.collection(db, "coupons"), window.firebaseModules.where("code", "==", code), window.firebaseModules.where("isActive", "==", true));
-        const snap = await window.firebaseModules.getDocs(q);
-        if (snap.empty) throw new Error('الكود غير صالح');
-        activeCoupon = snap.docs[0].data();
-        showToast('تم تطبيق الخصم', 'success');
-        if (typeof updateCartUI === 'function') updateCartUI();
-    } catch (e) {
-        showToast(e.message, 'error');
-        activeCoupon = null;
-        if (typeof updateCartUI === 'function') updateCartUI();
-    } finally { hideLoadingSpinner(); }
-};
-
-window.trackOrder = async function() {
-    const orderId = document.getElementById('trackOrderId')?.value?.trim()?.replace('NO:', '');
-    if (!orderId) return showToast('أدخل رقم الطلب', 'warning');
-    showLoadingSpinner('جاري البحث...');
-    try {
-        const q = window.firebaseModules.query(window.firebaseModules.collection(db, "orders"), window.firebaseModules.where("orderId", "==", orderId));
-        const snap = await window.firebaseModules.getDocs(q);
-        if (snap.empty) return showToast('الطلب غير موجود', 'error');
-        displayOrderTrackingResult(snap.docs[0].data());
-    } catch (e) { showToast('خطأ في التتبع', 'error'); }
-    finally { hideLoadingSpinner(); }
-};
-
-function displayOrderTrackingResult(order) {
-    const res = document.getElementById('trackingResult');
-    if (!res) return;
-    const statusMap = { 'pending': 'انتظار', 'processing': 'تنفيذ', 'shipped': 'شحن', 'delivered': 'توصيل' };
-    res.innerHTML = `
-        <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-top: 15px;">
-            <h4 style="color: var(--primary-color); margin-bottom: 10px;">طلب #${order.orderId}</h4>
-            <p>الحالة: <strong>${statusMap[order.status] || order.status}</strong></p>
-            <p>الإجمالي: ${formatNumber(order.total)} ${siteCurrency}</p>
-        </div>
-    `;
-    res.style.display = 'block';
-}
-
-
-
-// ======================== تحسينات ذكية (Manus Smart Features) ========================
-
-// 1. نظام إشعارات الشراء الأخيرة (Social Proof)
-const recentNames = ['أحمد', 'سارة', 'محمد', 'ليلى', 'خالد', 'نورة', 'ياسين', 'مريم'];
-const recentCities = ['الخرطوم', 'أم درمان', 'بحري', 'بورتسودان', 'مدني'];
-
-function showRecentPurchase() {
-    if (document.hidden) return;
-    
-    const name = recentNames[Math.floor(Math.random() * recentNames.length)];
-    const city = recentCities[Math.floor(Math.random() * recentCities.length)];
-    const product = allProducts.length > 0 ? allProducts[Math.floor(Math.random() * allProducts.length)].name : 'عطر ملكي';
-    
-    let toast = document.querySelector('.recent-purchase-toast');
-    if (!toast) {
-        toast = document.createElement('div');
-        toast.className = 'recent-purchase-toast';
-        document.body.appendChild(toast);
-    }
-    
-    toast.innerHTML = `
-        <div style="width: 40px; height: 40px; background: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
-            <i class="fas fa-shopping-bag"></i>
-        </div>
-        <div>
-            <p style="margin: 0; font-weight: bold;">${name} من ${city}</p>
-            <p style="margin: 0; font-size: 11px; color: var(--gray-color);">اشترى للتو: ${product}</p>
-        </div>
-    `;
-    
-    setTimeout(() => toast.classList.add('show'), 100);
-    setTimeout(() => toast.classList.remove('show'), 5000);
-}
-
-// تشغيل الإشعارات كل دقيقتين بشكل عشوائي
-setInterval(() => {
-    if (Math.random() > 0.7) showRecentPurchase();
-}, 120000);
-
-// 2. محرك البحث الذكي مع اقتراحات فورية
-window.initSmartSearch = function() {
-    const searchInput = document.querySelector('.search-container input');
-    if (!searchInput) return;
-    
-    searchInput.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase().trim();
-        if (term.length < 2) {
-            hideSearchSuggestions();
-            return;
-        }
-        
-        const suggestions = allProducts.filter(p => 
-            p.name.toLowerCase().includes(term) || 
-            (p.description && p.description.toLowerCase().includes(term))
-        ).slice(0, 5);
-        
-        showSearchSuggestions(suggestions);
-    });
-};
-
-function showSearchSuggestions(suggestions) {
-    let container = document.getElementById('searchSuggestions');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'searchSuggestions';
-        container.style.cssText = `
-            position: absolute; top: 100%; left: 0; right: 0;
-            background: white; border-radius: 0 0 15px 15px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1); z-index: 1001;
-            max-height: 300px; overflow-y: auto; border: 1px solid #eee;
-        `;
-        document.querySelector('.search-container').style.position = 'relative';
-        document.querySelector('.search-container').appendChild(container);
-    }
-    
-    if (suggestions.length === 0) {
-        container.innerHTML = '<p style="padding: 15px; text-align: center; color: #999;">لا توجد نتائج</p>';
-    } else {
-        container.innerHTML = suggestions.map(p => `
-            <div onclick="viewProductDetails('${p.id}')" style="padding: 10px 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; border-bottom: 1px solid #f5f5f5;" onmouseover="this.style.background='#f9f9f9'" onmouseout="this.style.background='white'">
-                <img src="${p.image}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px;">
-                <span style="font-size: 14px;">${p.name}</span>
-                <span style="margin-right: auto; font-weight: bold; color: var(--primary-color); font-size: 12px;">${formatNumber(p.price)}</span>
-            </div>
-        `).join('');
-    }
-    container.style.display = 'block';
-}
-
-function hideSearchSuggestions() {
-    const container = document.getElementById('searchSuggestions');
-    if (container) container.style.display = 'none';
-}
-
-// إغلاق الاقتراحات عند الضغط خارجها
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('.search-container')) hideSearchSuggestions();
-});
-
-// تفعيل البحث الذكي عند التحميل
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(window.initSmartSearch, 2000);
-});
-
-// ======================== تحسينات واجهة المستخدم (UI Pro) ========================
-
-// 1. ميزة تكبير الصور (Image Zoom) عند العرض
-window.initImageZoom = function() {
-    const images = document.querySelectorAll('.product-image img');
-    images.forEach(img => {
-        img.addEventListener('mousemove', (e) => {
-            const { left, top, width, height } = img.getBoundingClientRect();
-            const x = ((e.pageX - left - window.scrollX) / width) * 100;
-            const y = ((e.pageY - top - window.scrollY) / height) * 100;
-            img.style.transformOrigin = `${x}% ${y}%`;
-            img.style.transform = 'scale(1.5)';
-        });
-        
-        img.addEventListener('mouseleave', () => {
-            img.style.transform = 'scale(1)';
-            img.style.transformOrigin = 'center';
-        });
-    });
-};
-
-// 2. نظام Skeleton Loading للمنتجات
-window.showSkeletons = function() {
-    const grid = document.getElementById('productsGrid');
-    if (!grid) return;
-    
-    grid.innerHTML = Array(6).fill(0).map(() => `
-        <div class="product-card skeleton-card" style="pointer-events: none;">
-            <div class="skeleton" style="height: 200px; margin-bottom: 15px;"></div>
-            <div class="skeleton" style="height: 20px; width: 70%; margin-bottom: 10px;"></div>
-            <div class="skeleton" style="height: 15px; width: 40%; margin-bottom: 15px;"></div>
-            <div class="skeleton" style="height: 40px; width: 100%;"></div>
-        </div>
-    `).join('');
-};
-
-// تعديل دالة تحميل المنتجات الأصلية لتستخدم الـ Skeleton
-const originalLoadProducts = window.loadProducts;
-window.loadProducts = async function() {
-    window.showSkeletons();
-    // انتظار بسيط ليعطي شعوراً بالتحميل الاحترافي
-    await new Promise(r => setTimeout(r, 800));
-    if (typeof originalLoadProducts === 'function') {
-        await originalLoadProducts();
-    }
-    window.initImageZoom();
-};
-
-// 3. تحسين استجابة الهيدر عند التمرير (Smart Header)
-let lastScroll = 0;
-window.addEventListener('scroll', () => {
-    const header = document.querySelector('.header');
-    if (!header) return;
-    
-    const currentScroll = window.pageYOffset;
-    if (currentScroll <= 0) {
-        header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
-        return;
-    }
-    
-    if (currentScroll > lastScroll && currentScroll > 100) {
-        // التمرير للأسفل - إخفاء الهيدر جزئياً أو تصغيره
-        header.style.transform = 'translateY(-10%)';
-        header.style.opacity = '0.95';
-    } else {
-        // التمرير للأعلى - إظهار الهيدر
-        header.style.transform = 'translateY(0)';
-        header.style.opacity = '1';
-        header.style.boxShadow = '0 5px 20px rgba(0,0,0,0.15)';
-    }
-    lastScroll = currentScroll;
-});

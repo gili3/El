@@ -1438,11 +1438,10 @@ async function uploadReceiptImage(file) {
             }
         };
 
-        // تحويل الملف إلى Blob لضمان التوافق مع متصفحات الهاتف و Chrome
-        const blob = new Blob([file], { type: file.type });
-        console.log('📦 تم تحويل الملف إلى Blob بنجاح');
+        // استخدام File مباشر كما هو مطلوب
+        console.log('📦 البدء برفع الملف المباشر (File)');
 
-        const uploadTask = window.firebaseModules.uploadBytesResumable(storageRef, blob, metadata);
+        const uploadTask = window.firebaseModules.uploadBytesResumable(storageRef, file, metadata);
         
         return new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {

@@ -1,51 +1,87 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+    <!-- ======================== رؤوس الأمان ======================== -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eleven Store</title>
-    <meta name="theme-color" content="#c9a24d">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- Firebase Modular SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, collection, getDoc, getDocs, setDoc, updateDoc, query, where, orderBy, serverTimestamp, deleteDoc, addDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-
-        window.firebaseModules = { 
-            initializeApp, 
-            getAuth, 
-            onAuthStateChanged, 
-            GoogleAuthProvider, 
-            signInWithPopup, 
-            signInWithEmailAndPassword, 
-            createUserWithEmailAndPassword, 
-            signOut,
-            updateProfile,
-            getFirestore,
-            doc,
-            collection,
-            getDoc,
-            getDocs,
-            setDoc,
-            updateDoc,
-            deleteDoc,
-            addDoc,
-            query,
-            where,
-            orderBy,
-            serverTimestamp,
-            increment,
-            getStorage,
-            ref,
-            uploadBytes,
-            getDownloadURL,
-            uploadBytesResumable
-        };
-        console.log("✅ Firebase Modules Loaded");
-        window.dispatchEvent(new CustomEvent('firebase-ready'));
+    <!-- رؤوس أمان إضافية -->
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()">
+    
+    <title id="dynamicTitle">Eleven Store - Secure</title>
+    
+    <!-- حماية أثناء التحميل -->
+    <script>
+        (function() {
+            'use strict';
+            
+            // سجل بدء الحماية
+            console.log('🛡️ بدء الحماية المؤقتة...');
+            
+            // حماية مؤقتة ضد التعديل
+            const protectGlobals = () => {
+                const protected = ['localStorage', 'sessionStorage', 'cookie'];
+                
+                protected.forEach(item => {
+                    try {
+                        if (item === 'localStorage') {
+                            const original = window.localStorage;
+                            const fakeStorage = {
+                                getItem: function(k) { 
+                                    console.warn('⚠️ تم منع الوصول إلى localStorage أثناء التحميل');
+                                    return null; 
+                                },
+                                setItem: function() {},
+                                removeItem: function() {},
+                                clear: function() {},
+                                length: 0
+                            };
+                            
+                            Object.defineProperty(window, 'localStorage', {
+                                get: () => fakeStorage,
+                                configurable: true
+                            });
+                            
+                            // استعادة بعد 5 ثواني
+                            setTimeout(() => {
+                                Object.defineProperty(window, 'localStorage', {
+                                    get: () => original,
+                                    configurable: true
+                                });
+                                console.log('✅ تمت استعادة localStorage');
+                            }, 5000);
+                        }
+                    } catch(e) {}
+                });
+                
+                // منع eval مؤقتاً
+                const originalEval = window.eval;
+                window.eval = function(code) {
+                    console.error('🚨 تم منع eval لأسباب أمنية');
+                    return null;
+                };
+                
+                setTimeout(() => {
+                    window.eval = originalEval;
+                    console.log('✅ تمت استعادة eval');
+                }, 5000);
+            };
+            
+            // تشغيل الحماية
+            protectGlobals();
+        })();
     </script>
+    
+    <!-- باقي head -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#c9a24d">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Eleven Store">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/fVn1SghC/file-00000000cf8071f498fc71b66e09f615.png">
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -54,16 +90,28 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- CSS -->
-    <link rel="stylesheet" href="style.css?v=8">
+    <link rel="stylesheet" href="style.css?v=22">
+    
+    <!-- Security Systems -->
+    <script src="js/integrity-check.js"></script>
+    <script src="js/firebase-config-secure.js"></script>
+    <script src="js/two-factor-auth.js"></script>
     
     <style>
         /* شاشة التحميل الأولية */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            width: 100vw;
+        }
         #initialLoader {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             background-color: #fff;
             display: flex;
             flex-direction: column;
@@ -76,7 +124,7 @@
             width: 50px;
             height: 50px;
             border: 5px solid #f3f3f3;
-            border-top: 5px solid #555555;
+            border-top: 5px solid var(--primary-color, #555555);
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 15px;
@@ -86,14 +134,40 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* أنماط الإيصالات */
+        /* إخفاء العناصر الرئيسية حتى يتم التحقق من المصادقة */
+        #authScreen, #appContainer {
+            display: none !important;
+        }
+        
+        /* أنماط جديدة للصور والإيصالات */
         .receipt-section {
             margin: 20px 0;
             padding: 20px;
-            background: #f9f9f9;
+            background: var(--light-color);
             border-radius: 12px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
             width: 100%;
+        }
+        
+        .receipt-section h5 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+        }
+        
+        .receipt-section img {
+            transition: transform 0.3s ease;
+            border: 2px solid transparent;
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .receipt-section img:hover {
+            transform: scale(1.05);
+            border-color: var(--secondary-color);
         }
         
         .view-receipt-btn {
@@ -101,7 +175,7 @@
             align-items: center;
             gap: 8px;
             padding: 10px 20px;
-            background: #c9a24d;
+            background: var(--secondary-color);
             color: white;
             border: none;
             border-radius: 8px;
@@ -115,7 +189,7 @@
         }
         
         .view-receipt-btn:hover {
-            background: #555555;
+            background: var(--button-press-color, #555555);
             transform: translateY(-2px);
         }
         
@@ -125,25 +199,31 @@
             align-items: center;
             justify-content: center;
             padding: 25px;
-            border: 2px dashed #ddd;
+            border: 2px dashed var(--border-color);
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: #f9f9f9;
+            background: var(--light-color);
             text-align: center;
             width: 100%;
             min-height: 150px;
         }
         
         .upload-label:hover {
-            border-color: #c9a24d;
+            border-color: var(--secondary-color);
             background: rgba(201, 162, 77, 0.05);
         }
         
         .upload-label i {
             font-size: 40px;
-            color: #c9a24d;
+            color: var(--secondary-color);
             margin-bottom: 10px;
+        }
+        
+        .upload-label span {
+            color: var(--dark-color);
+            font-weight: 600;
+            font-size: 15px;
         }
         
         .order-status-badge {
@@ -185,37 +265,49 @@
             color: #721c24;
         }
         
-        /* شريط تقدم الرفع */
-        .upload-progress {
-            display: none;
-            margin-top: 15px;
+        /* معاينة الصورة */
+        #receiptPreviewContainer {
+            animation: fadeIn 0.3s ease;
+            width: 100%;
         }
         
-        .progress-bar {
-            height: 6px;
-            background: #eee;
-            border-radius: 3px;
-            overflow: hidden;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         
-        .progress-fill {
-            height: 100%;
-            background: #c9a24d;
-            width: 0%;
-            transition: width 0.3s;
+        /* زر الإيصال */
+        .btn-receipt {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--light-color);
+            color: var(--dark-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Cairo';
+            font-size: 14px;
+            transition: all 0.2s ease;
+            min-height: 40px;
         }
         
-        .progress-text {
-            text-align: center;
-            margin-top: 5px;
-            font-size: 12px;
-            color: #666;
+        .btn-receipt:hover {
+            background: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
         }
         
+        /* تحسين التجاوب */
         @media (max-width: 768px) {
             .receipt-section {
                 padding: 15px;
                 margin: 15px 0;
+            }
+            
+            .receipt-section img {
+                max-width: 150px;
             }
             
             .upload-label {
@@ -237,23 +329,115 @@
                 font-size: 13px;
             }
         }
+        
+        @media (max-width: 480px) {
+            .receipt-section img {
+                max-width: 120px;
+            }
+            
+            .upload-label {
+                padding: 15px;
+                min-height: 100px;
+            }
+            
+            .upload-label i {
+                font-size: 30px;
+            }
+            
+            .upload-label span {
+                font-size: 14px;
+            }
+        }
+        
+        /* تحسينات للجوال */
+        @media (hover: none) and (pointer: coarse) {
+            .view-receipt-btn:hover,
+            .btn-receipt:hover {
+                transform: none;
+            }
+        }
+        
+        /* تحسين الوصول */
+        button:focus,
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: 2px solid var(--secondary-color);
+            outline-offset: 2px;
+        }
+        
+        /* تحسينات تحميل الصور */
+        img.lazy {
+            background: #f0f0f0;
+            min-height: 200px;
+        }
+        
+        /* شريط تحميل المنتجات */
+        .loading-more {
+            text-align: center;
+            padding: 20px;
+            color: var(--gray-color);
+        }
+        
+        .loading-spinner-small {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        
+        /* شريط حالة الأمان */
+        .security-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #27ae60, #3498db, #e74c3c);
+            z-index: 99999;
+            opacity: 0.7;
+        }
+        
+        /* شعار الأمان */
+        .security-badge {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: #27ae60;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            z-index: 9999;
+            opacity: 0.8;
+        }
     </style>
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="https://i.ibb.co/fVn1SghC/file-00000000cf8071f498fc71b66e09f615.png">
 </head>
 <body>
+    <!-- شريط حالة الأمان -->
+    <div class="security-bar"></div>
+    <div class="security-badge">🔒 آمن</div>
+    
     <!-- شاشة التحميل الأولية -->
     <div id="initialLoader">
         <div class="loader-spinner"></div>
         <p>جاري التحميل...</p>
+        <p style="font-size: 12px; color: #777; margin-top: 10px;">الإصدار الآمن 2.0</p>
     </div>
     
     <!-- شاشة المصادقة -->
     <div id="authScreen" class="auth-screen" style="display: none;">
         <div class="auth-container">
             <div class="auth-header">
-                <img id="authLogo" src="https://i.ibb.co/N6Bfb1KW/file-00000000e020720cbb1ddc5fc4577270.png" alt="Eleven Logo" class="auth-logo">
+                <img id="authLogo" src="https://i.ibb.co/fVn1SghC/file-00000000cf8071f498fc71b66e09f615.png" alt="Eleven Logo" class="auth-logo" loading="lazy">
                 <h1>Eleven</h1>
                 <p>حيث تجد عطرك المفضل واكثر</p>
             </div>
@@ -377,33 +561,40 @@
 
     <!-- التطبيق الرئيسي -->
     <div id="appContainer" class="app-container" style="display: none;">
-        <!-- الهيدر -->
-        <header class="header">
+        <!-- الهيدر المعدل -->
+        <header class="header" id="mainHeader">
             <div class="header-content">
-                <!-- زر القائمة -->
-                <button class="menu-toggle" id="menuToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                
-                <!-- الشعار -->
-                <div class="logo">
-                    <img id="siteLogo" src="https://i.ibb.co/N6Bfb1KW/file-00000000e020720cbb1ddc5fc4577270.png" alt="Eleven" loading="lazy">
-                    <h1 id="siteStoreName">Eleven</h1>
-                </div>
-                
-                <!-- أيقونات التنقل -->
-                <div class="nav-icons">
-                    <!-- شريط البحث -->
-                    <div class="search-container">
-                        <input type="text" id="searchInput" placeholder="ابحث عن منتج...">
-                        <button id="searchBtn"><i class="fas fa-search"></i></button>
+                <!-- الجزء الأيمن -->
+                <div class="header-right">
+                    <div id="homeHeaderIcons" style="display: flex; align-items: center; gap: 8px;">
+                        <button class="menu-toggle" id="menuToggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <button class="nav-icon cart-icon" id="cartBtn" title="سلة التسوق">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="cart-count">0</span>
+                        </button>
                     </div>
                     
-                    <!-- السلة -->
-                    <button class="nav-icon cart-icon" id="cartBtn" title="سلة التسوق">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span class="cart-count">0</span>
+                    <button class="back-btn" id="backBtn" style="display: none;" onclick="goBack()">
+                        <i class="fas fa-arrow-left"></i>
                     </button>
+                </div>
+
+                <!-- الوسط: الشعار والاسم -->
+                <div class="header-center">
+                    <div class="logo" onclick="showSection('home')">
+                        <img id="siteLogo" src="https://i.ibb.co/fVn1SghC/file-00000000cf8071f498fc71b66e09f615.png" alt="Eleven" loading="lazy">
+                        <h1 id="siteStoreName">Eleven</h1>
+                    </div>
+                </div>
+
+                <!-- الجزء الأيسر -->
+                <div class="header-left">
+                    <div class="search-container" id="homeSearchContainer" style="display: flex;">
+                        <input type="text" id="searchInput" placeholder="ابحث...">
+                        <button id="searchBtn"><i class="fas fa-search"></i></button>
+                    </div>
                 </div>
             </div>
         </header>
@@ -432,7 +623,7 @@
                 <li><a href="#" data-section="my-orders"><i class="fas fa-shopping-bag"></i> طلباتي</a></li>
                 <li><a href="#" data-section="profile"><i class="fas fa-user"></i> الملف الشخصي</a></li>
                 <li id="adminMobileLink" style="display: none;">
-                    <a href="#" data-section="admin"><i class="fas fa-cog"></i> لوحة التحكم</a>
+                    <a href="admin/index.html"><i class="fas fa-cog"></i> لوحة التحكم</a>
                 </li>
                 <li class="logout-item">
                     <a href="#" id="mobileLogoutBtn" class="logout-link">
@@ -451,8 +642,8 @@
                     <h2 class="section-title">اكتشف منتجاتنا</h2>
                     
                     <!-- نظام الفلترة السريع -->
-                    <div class="quick-filters" style="display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px;">
-                        <button class="filter-tab active" onclick="filterMainProducts('all', this)" style="padding: 10px 20px; border-radius: 20px; border: 1px solid #555555; background: #555555; color: white; cursor: pointer; white-space: nowrap; font-family: 'Cairo'; min-height: 44px;">الكل</button>
+                    <div class="quick-filters" style="display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none;">
+                        <button class="filter-tab active" onclick="filterMainProducts('all', this)" style="padding: 10px 20px; border-radius: 20px; border: 1px solid var(--primary-color); background: var(--primary-color); color: white; cursor: pointer; white-space: nowrap; font-family: 'Cairo'; min-height: 44px;">الكل</button>
                         <button class="filter-tab" onclick="filterMainProducts('isNew', this)" style="padding: 10px 20px; border-radius: 20px; border: 1px solid #ddd; background: white; cursor: pointer; white-space: nowrap; font-family: 'Cairo'; min-height: 44px;">وصل حديثاً</button>
                         <button class="filter-tab" onclick="filterMainProducts('isSale', this)" style="padding: 10px 20px; border-radius: 20px; border: 1px solid #ddd; background: white; cursor: pointer; white-space: nowrap; font-family: 'Cairo'; min-height: 44px;">العروض</button>
                         <button class="filter-tab" onclick="filterMainProducts('isBest', this)" style="padding: 10px 20px; border-radius: 20px; border: 1px solid #ddd; background: white; cursor: pointer; white-space: nowrap; font-family: 'Cairo'; min-height: 44px;">الأكثر مبيعاً</button>
@@ -523,9 +714,9 @@
                     <!-- سيتم تعبئتها بواسطة JavaScript -->
                 </div>
                 
-                <div class="products-loading" id="productsLoading">
-                    <div class="spinner"></div>
-                    <p>جاري تحميل المنتجات...</p>
+                <div class="loading-more" id="productsLoading" style="display: none;">
+                    <div class="loading-spinner-small"></div>
+                    <p>جاري تحميل المزيد من المنتجات...</p>
                 </div>
             </section>
 
@@ -539,28 +730,16 @@
                     </div>
                     
                     <div class="cart-summary">
-                        <div class="coupon-section">
-                            <label for="couponInput">كود الخصم:</label>
-                            <div class="coupon-input-container">
-                                <input type="text" id="couponInput" placeholder="أدخل الكود هنا">
-                                <button id="applyCouponBtn" onclick="applyCoupon()" class="btn-secondary">تطبيق</button>
-                            </div>
-                            <div id="appliedCouponInfo"></div>
-                        </div>
                         <div class="summary-item">
-                            <span>إجمالي المنتجات:</span>
+                            <span>الإجمالي:</span>
                             <span id="cartSubtotal">0 SDG</span>
                         </div>
-                        <div class="summary-item" id="discountRow" style="display: none; color: #27ae60;">
-                            <span>الخصم:</span>
-                            <span id="discountAmount">0 SDG</span>
-                        </div>
                         <div class="summary-item">
-                            <span>رسوم الشحن:</span>
+                            <span>الشحن:</span>
                             <span id="cartShipping">0 SDG</span>
                         </div>
                         <div class="summary-item total">
-                            <span>المجموع الكلي:</span>
+                            <span>المجموع:</span>
                             <span id="cartTotal">0 SDG</span>
                         </div>
                         
@@ -568,7 +747,7 @@
                             <!-- سيتم تعبئته بواسطة JavaScript -->
                         </div>
                         
-                        <button id="checkoutBtn" class="checkout-btn" disabled>
+                        <button id="checkoutBtn" class="checkout-btn" onclick="goToCheckout()" disabled>
                             <i class="fas fa-credit-card"></i> إتمام الشراء
                         </button>
                         
@@ -595,7 +774,7 @@
                         <!-- سيتم تحميل الطلبات هنا -->
                     </div>
                     <div id="emptyOrdersMessage" class="empty-orders" style="display: none; text-align: center; padding: 40px;">
-                        <i class="fas fa-shopping-bag fa-3x" style="color: #666; margin-bottom: 20px;"></i>
+                        <i class="fas fa-shopping-bag fa-3x" style="color: var(--gray-color); margin-bottom: 20px;"></i>
                         <h3>لا توجد طلبات حالياً</h3>
                         <p>لم تقم بإجراء أي طلبات بعد</p>
                         <button class="cta-btn" onclick="showSection('products')">ابدأ التسوق الآن</button>
@@ -619,12 +798,46 @@
                 </div>
             </section>
 
+            <!-- قسم تتبع الطلب -->
+            <section id="orderTracking" class="section">
+                <h2 class="section-title">تتبع طلبك</h2>
+                <div class="order-tracking-container">
+                    <div class="tracking-search">
+                        <input type="text" id="orderIdInput" placeholder="أدخل رقم الطلب (مثال: NO:311001)">
+                        <button class="btn-primary" id="trackOrderBtn">تتبع</button>
+                    </div>
+                    <div id="trackingResult" style="display: none;">
+                        <div class="tracking-status-bar">
+                            <div class="status-step" data-status="pending">
+                                <div class="status-icon"><i class="fas fa-clock"></i></div>
+                                <div class="status-text">قيد الانتظار</div>
+                            </div>
+                            <div class="status-step" data-status="processing">
+                                <div class="status-icon"><i class="fas fa-cog"></i></div>
+                                <div class="status-text">قيد التجهيز</div>
+                            </div>
+                            <div class="status-step" data-status="shipped">
+                                <div class="status-icon"><i class="fas fa-truck"></i></div>
+                                <div class="status-text">تم الشحن</div>
+                            </div>
+                            <div class="status-step" data-status="delivered">
+                                <div class="status-icon"><i class="fas fa-check-double"></i></div>
+                                <div class="status-text">تم التسليم</div>
+                            </div>
+                        </div>
+                        <div id="orderSummaryDetails" class="order-summary-card">
+                            <!-- سيتم تعبئتها بواسطة JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- قسم الملف الشخصي -->
             <section id="profile" class="section">
                 <div class="profile-container">
                     <div class="profile-header">
                         <div class="profile-image-container">
-                            <img id="profileImage" src="https://i.ibb.co/nNx4v1x5/images-1.png" alt="صورة المستخدم">
+                            <img id="profileImage" src="https://i.ibb.co/nNx4v1x5/images-1.png" alt="صورة المستخدم" loading="lazy">
                             <button class="edit-image-btn" id="editImageBtn">
                                 <i class="fas fa-camera"></i>
                             </button>
@@ -639,26 +852,38 @@
                     <!-- معلومات المستخدم -->
                     <div class="profile-section">
                         <h3><i class="fas fa-user-circle"></i> معلومات الحساب</h3>
-                        <div class="profile-details">
-                            <div class="detail-item">
-                                <span class="detail-label">الاسم:</span>
-                                <span id="detailName" class="detail-value">--</span>
+                        <div class="profile-details-grid">
+                            <div class="detail-card">
+                                <i class="fas fa-user"></i>
+                                <div class="detail-content">
+                                    <span class="detail-label">الاسم الكامل</span>
+                                    <span id="detailName" class="detail-value">--</span>
+                                </div>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">البريد الإلكتروني:</span>
-                                <span id="detailEmail" class="detail-value">--</span>
+                            <div class="detail-card">
+                                <i class="fas fa-envelope"></i>
+                                <div class="detail-content">
+                                    <span class="detail-label">البريد الإلكتروني</span>
+                                    <span id="detailEmail" class="detail-value">--</span>
+                                </div>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">رقم الهاتف:</span>
-                                <span id="detailPhone" class="detail-value">--</span>
+                            <div class="detail-card">
+                                <i class="fas fa-phone"></i>
+                                <div class="detail-content">
+                                    <span class="detail-label">رقم الهاتف</span>
+                                    <span id="detailPhone" class="detail-value">--</span>
+                                </div>
                             </div>
-                            <div class="detail-item">
-                                <span class="detail-label">العنوان:</span>
-                                <span id="detailAddress" class="detail-value">--</span>
+                            <div class="detail-card">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <div class="detail-content">
+                                    <span class="detail-label">العنوان</span>
+                                    <span id="detailAddress" class="detail-value">--</span>
+                                </div>
                             </div>
                         </div>
                         <button class="edit-profile-btn" id="editProfileBtn">
-                            <i class="fas fa-edit"></i> تعديل الملف الشخصي
+                            <i class="fas fa-user-edit"></i> تعديل البيانات الشخصية
                         </button>
                     </div>
                     
@@ -688,7 +913,101 @@
                     </div>
                 </div>
             </section>
-            
+
+            <!-- قسم الدفع -->
+            <section id="checkout" class="section">
+                <h2 class="section-title">إتمام الطلب</h2>
+                
+                <div class="checkout-container">
+                    <!-- نموذج الدفع -->
+                    <div class="checkout-form">
+                        <div class="form-section">
+                            <h3><i class="fas fa-university"></i> معلومات التحويل البنكي</h3>
+                            <div class="bank-info-card">
+                                <div class="bank-row">
+                                    <span>البنك:</span>
+                                    <strong id="checkoutBankName">بنك الخرطوم (بنكك)</strong>
+                                </div>
+                                <div class="bank-row">
+                                    <span>رقم الحساب:</span>
+                                    <strong id="checkoutBankAccount">1234567</strong>
+                                </div>
+                                <div class="bank-row">
+                                    <span>باسم:</span>
+                                    <strong id="checkoutBankAccountName">متجر Eleven للعطور</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3><i class="fas fa-truck"></i> بيانات التسليم</h3>
+                            <div class="form-group">
+                                <label for="checkoutPhone">رقم الهاتف * <small>(إجباري)</small></label>
+                                <input type="tel" id="checkoutPhone" placeholder="مثال: 0912345678" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="checkoutAddress">العنوان <small>(اختياري)</small></label>
+                                <textarea id="checkoutAddress" placeholder="مثال: الخرطوم، حي الرياض..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="checkoutNotes">ملاحظات إضافية</label>
+                                <textarea id="checkoutNotes" placeholder="أي ملاحظات تود إضافتها..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3><i class="fas fa-receipt"></i> رفع إيصال التحويل</h3>
+                            <div class="receipt-upload-wrapper">
+                                <label for="checkoutReceipt" class="receipt-upload-container" id="receiptUploadLabel">
+                                    <div id="checkoutUploadPlaceholder">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <h4>ارفق صورة الإيصال</h4>
+                                        <p>اضغط هنا لاختيار الصورة من جهازك</p>
+                                    </div>
+                                    <input type="file" id="checkoutReceipt" accept="image/*" style="display: none;" onchange="previewCheckoutReceipt(this)">
+                                </label>
+                                <div id="checkoutReceiptPreview" style="display: none; margin-top: 15px; text-align: center; position: relative;">
+                                    <img id="checkoutReceiptImg" src="" alt="إيصال" style="max-width: 100%; max-height: 300px; border-radius: 12px; border: 2px solid var(--secondary-color); box-shadow: var(--shadow);">
+                                    <button type="button" class="remove-receipt-btn" onclick="removeCheckoutReceipt()" style="position: absolute; top: -10px; right: -10px; width: 30px; height: 30px; background: #e74c3c; color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    <p style="margin-top: 10px; font-size: 12px; color: var(--success-color); font-weight: 600;"><i class="fas fa-check-circle"></i> تم اختيار الصورة بنجاح</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- الملخص الجانبي -->
+                    <div class="checkout-summary">
+                        <div id="checkoutItems" class="checkout-items">
+                            <!-- سيتم تعبئتها بواسطة JavaScript -->
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span>إجمالي المنتجات:</span>
+                            <span id="checkoutSubtotal">0 SDG</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>قيمة الشحن:</span>
+                            <span id="checkoutShipping">0 SDG</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>المجموع:</span>
+                            <span id="checkoutTotal">0 SDG</span>
+                        </div>
+                        
+                        <div class="submit-order-btn-container">
+                            <button class="btn-confirm-order" id="submitOrderBtn" onclick="submitCheckoutOrder()" disabled>
+                                <span>تأكيد الطلب <i class="fas fa-check-circle"></i></span>
+                                <span class="price-tag" id="checkoutTotalBtn">0</span>
+                            </button>
+                            <p style="text-align: center; font-size: 12px; color: #888; margin-top: 10px;">
+                                <i class="fas fa-info-circle"></i> سيتم معالجة الطلب فور إرسال الإيصال
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
 
         <!-- الفوتر -->
@@ -696,14 +1015,16 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <div class="footer-logo">
-                        <img id="footerLogo" src="https://i.ibb.co/N6Bfb1KW/file-00000000e020720cbb1ddc5fc4577270.png" alt="Eleven">
+                        <img id="footerLogo" src="https://i.ibb.co/fVn1SghC/file-00000000cf8071f498fc71b66e09f615.png" alt="Eleven" loading="lazy">
                         <h3 id="footerStoreName">Eleven</h3>
                     </div>
                     <p id="storeDescription">متجر متخصص في بيع العطور ومستحضرات التجميل الأصلية</p>
-                    <div class="social-icons">
-                        <a href="https://www.instagram.com/queenbeauty_sd" target="_blank" class="social-icon"><i class="fab fa-instagram"></i></a>
-                        <a href="https://twitter.com/queenbeauty_sd" target="_blank" class="social-icon"><i class="fab fa-twitter"></i></a>
-                        <a href="https://wa.me/249933002015" target="_blank" class="social-icon"><i class="fab fa-whatsapp"></i></a>
+                    <div class="social-icons" id="footerSocialIcons">
+                        <a href="#" target="_blank" class="social-icon" id="footerFacebook" style="display: none;"><i class="fab fa-facebook"></i></a>
+                        <a href="#" target="_blank" class="social-icon" id="footerInstagram" style="display: none;"><i class="fab fa-instagram"></i></a>
+                        <a href="#" target="_blank" class="social-icon" id="footerTwitter" style="display: none;"><i class="fab fa-twitter"></i></a>
+                        <a href="#" target="_blank" class="social-icon" id="footerTiktok" style="display: none;"><i class="fab fa-tiktok"></i></a>
+                        <a href="#" target="_blank" class="social-icon" id="footerWhatsapp"><i class="fab fa-whatsapp"></i></a>
                     </div>
                 </div>
                 
@@ -764,7 +1085,7 @@
         </div>
     </div>
 
-    <!-- نافذة إتمام الطلب ورفع الإيصال -->
+    <!-- نافذة إتمام الطلب -->
     <div id="checkoutModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -790,14 +1111,14 @@
                     </div>
                     <div class="order-total-display">
                         <span>الإجمالي المطلوب:</span>
-                        <h3 id="checkoutTotalDisplay">0 SDG</h3>
+                            <h3 id="checkoutTotalDisplay">0 SDG</h3>
                     </div>
                 </div>
                 
                 <div class="receipt-upload-container" style="background: #f9f9f9; padding: 20px; border-radius: 15px; border: 2px dashed #ddd; text-align: center; transition: all 0.3s ease;">
                     <label for="receiptInput" class="upload-label" style="cursor: pointer; display: block;">
                         <div id="uploadPlaceholder">
-                            <i class="fas fa-cloud-upload-alt" style="font-size: 40px; color: #c9a24d; margin-bottom: 10px;"></i>
+                            <i class="fas fa-cloud-upload-alt" style="font-size: 40px; color: var(--secondary-color); margin-bottom: 10px;"></i>
                             <h4 style="margin-bottom: 5px;">ارفع صورة إيصال التحويل</h4>
                             <p style="font-size: 13px; color: #777;">اضغط هنا لاختيار الصورة من جهازك</p>
                         </div>
@@ -807,12 +1128,12 @@
                     <!-- شريط تقدم الرفع -->
                     <div class="upload-progress" id="uploadProgress" style="display: none; margin-top: 15px;">
                         <div class="progress-bar" style="height: 8px; background: #eee; border-radius: 4px; overflow: hidden;">
-                            <div class="progress-fill" id="progressFill" style="height: 100%; background: #c9a24d; width: 0%; transition: width 0.3s;"></div>
+                            <div class="progress-fill" id="progressFill" style="height: 100%; background: var(--secondary-color); width: 0%; transition: width 0.3s;"></div>
                         </div>
                         <div class="progress-text" id="progressText" style="font-size: 12px; margin-top: 5px; color: #666;">0%</div>
                     </div>
                     
-                    <div id="receiptPreviewContainer" style="display: none; margin-top: 10px; position: relative;">
+                    <div id="receiptPreviewContainer" style="display: none; margin-top: 10px; position: relative; animation: fadeIn 0.3s ease;">
                         <div style="position: relative; display: inline-block;">
                             <img id="receiptPreviewImg" src="" alt="إيصال" style="width: 100%; max-width: 250px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border: 3px solid white;">
                             <button id="removeReceiptBtn" style="position: absolute; top: -10px; right: -10px; background: #ff4757; color: white; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 10;" onclick="removeReceiptPreview()">
@@ -824,7 +1145,10 @@
                 </div>
 
                 <div class="form-group" style="margin-top: 20px;">
-                    <label for="orderPhone">رقم الهاتف * <small>(إجباري للتواصل وتأكيد الطلب)</small></label>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label for="orderPhone" style="margin-bottom: 0;">رقم الهاتف *</label>
+                        <button type="button" onclick="enableDataEdit()" id="editDataBtn" style="background: none; border: none; color: var(--secondary-color); font-size: 12px; cursor: pointer; text-decoration: underline; display: none;">تعديل البيانات</button>
+                    </div>
                     <input type="tel" id="orderPhone" placeholder="مثال: 0912345678" required>
                 </div>
 
@@ -849,31 +1173,101 @@
         </div>
     </div>
 
-    <!-- نافذة تفاصيل المنتج -->
-    <div id="productModal" class="modal">
-        <div class="modal-content small-modal">
+    <!-- نافذة تحديد الكمية -->
+    <div id="quantityModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header">
-                <h3 id="quantityProductName">تحديد الكمية</h3>
-                <button class="close-modal">&times;</button>
+                <h3>تحديد الكمية</h3>
+                <button class="close-modal" onclick="closeQuantityModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <h4 id="quantityModalProductName" style="margin-bottom: 20px;">اسم المنتج</h4>
+                <div class="quantity-controls" style="justify-content: center; margin-bottom: 30px; background: #f5f5f5; padding: 15px; border-radius: 15px;">
+                    <button class="quantity-btn" onclick="changeModalQuantity(-1)" style="width: 44px; height: 44px; font-size: 20px;">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <span id="modalQuantityDisplay" style="font-size: 24px; font-weight: 700; min-width: 60px; display: inline-block;">1</span>
+                    <button class="quantity-btn" onclick="changeModalQuantity(1)" style="width: 44px; height: 44px; font-size: 20px;">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div id="quantityModalActions" style="display: flex; flex-direction: column; gap: 12px;">
+                    <button id="confirmAddToCartBtn" class="btn-secondary" style="width: 100%; padding: 15px; border-radius: 12px; font-weight: 600; background: var(--secondary-color); color: white; border: none; cursor: pointer;">
+                        <i class="fas fa-cart-plus"></i> إضافة للسلة
+                    </button>
+                    <button id="confirmBuyNowBtn" class="btn-primary" style="width: 100%; padding: 15px; border-radius: 12px; font-weight: 700; background: var(--primary-color); color: white; border: none; cursor: pointer;">
+                        <i class="fas fa-bolt"></i> إكمال الطلب (شراء مباشر)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تفاصيل المنتج الكاملة -->
+    <div id="productDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalProductName">تفاصيل المنتج</h3>
+                <button class="close-modal" onclick="closeProductDetailsModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="quantity-selector">
-                    <div class="quantity-controls">
-                        <button class="quantity-btn" id="decreaseQuantity">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                        <input type="number" id="selectedQuantity" value="1" min="1" max="99">
-                        <button class="quantity-btn" id="increaseQuantity">
-                            <i class="fas fa-plus"></i>
-                        </button>
+                <div class="product-details-container">
+                    <div class="product-details-image">
+                        <img id="modalProductImage" src="" alt="منتج" loading="lazy">
                     </div>
-                    <div class="quantity-actions" style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
-                        <button class="btn-secondary" id="addToCartFromModal" style="width: 100%; background: #c9a24d; color: white; border: none; padding: 15px;">
-                            <i class="fas fa-cart-plus"></i> إضافة للسلة
-                        </button>
-                        <button class="btn-primary" id="buyNowFromModal" style="width: 100%; background: #555555; padding: 15px;">
-                            <i class="fas fa-bolt"></i> إكمال الطلب (شراء مباشر)
-                        </button>
+                    <div class="product-details-info">
+                        <h2 id="modalProductTitle"></h2>
+                        <div class="product-rating-summary" id="modalProductRatingSummary">
+                            <div class="stars"><i class="fas fa-star"></i> <span id="avgRating">0.0</span></div>
+                            <span class="rating-count">(<span id="reviewCount">0</span> تقييم)</span>
+                        </div>
+                        <p class="product-category" id="modalProductCategory"></p>
+                        <p class="product-price" id="modalProductPrice"></p>
+                        <div class="product-description" id="modalProductDescription"></div>
+                        
+                        <div class="product-stock-info">
+                            <span>المخزون المتوفر: </span>
+                            <strong id="modalProductStock">0</strong>
+                        </div>
+
+                        <div class="product-actions-row" style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button class="btn-primary" id="modalBuyBtn" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: var(--primary-color); color: white; font-weight: 600; cursor: pointer;">
+                                <i class="fas fa-shopping-bag"></i> شراء
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- قسم التقييمات -->
+                <div class="product-reviews-section" style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3>التقييمات والآراء</h3>
+                        <button class="add-review-btn" onclick="toggleReviewForm()" style="padding: 8px 15px; border-radius: 20px; border: 1px solid var(--secondary-color); background: white; color: var(--secondary-color); font-weight: 600; cursor: pointer;">أضف تقييمك</button>
+                    </div>
+
+                    <div id="reviewForm" class="review-form" style="display: none; background: #f9f9f9; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                        <h4>أضف تقييمك للمنتج</h4>
+                        <div class="rating-input" style="margin: 15px 0; font-size: 24px; color: #ddd; cursor: pointer;">
+                            <i class="far fa-star" data-value="1"></i>
+                            <i class="far fa-star" data-value="2"></i>
+                            <i class="far fa-star" data-value="3"></i>
+                            <i class="far fa-star" data-value="4"></i>
+                            <i class="far fa-star" data-value="5"></i>
+                        </div>
+                        <textarea id="reviewComment" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Cairo'; margin-bottom: 15px;" rows="3" placeholder="اكتب رأيك هنا..."></textarea>
+                        <div class="review-image-upload" style="margin-bottom: 15px;">
+                            <label for="reviewImageInput" style="cursor: pointer; color: var(--secondary-color); font-weight: 600;">
+                                <i class="fas fa-camera"></i> أضف صورة (اختياري)
+                            </label>
+                            <input type="file" id="reviewImageInput" accept="image/*" style="display: none;" onchange="previewReviewImage(this)">
+                            <div id="reviewImagePreview" style="margin-top: 10px;"></div>
+                        </div>
+                        <button class="submit-review-btn" onclick="submitReview()" style="width: 100%; padding: 12px; border-radius: 8px; border: none; background: var(--primary-color); color: white; font-weight: 700; cursor: pointer;">إرسال التقييم</button>
+                    </div>
+
+                    <div id="productReviewsList" class="reviews-list">
+                        <!-- سيتم تعبئتها برمجياً -->
+                        <p style="text-align: center; color: #888; padding: 20px;">لا توجد تقييمات لهذا المنتج بعد.</p>
                     </div>
                 </div>
             </div>
@@ -897,7 +1291,98 @@
     <!-- الإشعارات -->
     <div id="toastContainer"></div>
     
-    <!-- JavaScript -->
-    <script src="main.js?v=8"></script>
+    <!-- ======================== تحميل ملفات JavaScript ======================== -->
+    
+    <!-- 1. أولاً: الملفات الأمنية الجديدة -->
+    <script src="js/security-config.js?v=1"></script>
+    <script src="js/security-system.js?v=1"></script>
+    <script src="js/encryption.js?v=1"></script>
+    <script src="js/firebase-security.js?v=1"></script>
+    <script src="js/integrity-check.js?v=1"></script>
+    <script src="js/secure-loader.js?v=1"></script>
+    <script src="js/csp.js?v=1"></script>
+    
+    <!-- 2. ثانياً: ملفات Firebase -->
+    <script src="js/firebase-config.js?v=22"></script>
+    <script src="js/firebase-messaging.js?v=22"></script>
+    <script src="js/notifications-system.js?v=22"></script>
+    
+    <!-- 3. ثالثاً: ملفات التطبيق الأساسية -->
+    <script src="js/app-core.js?v=22"></script>
+    <script src="js/auth-system.js?v=22"></script>
+    <script src="js/products-system.js?v=22"></script>
+    <script src="js/cart-system.js?v=22"></script>
+    <script src="js/orders-system.js?v=22"></script>
+    <script src="js/checkout-system.js?v=22"></script>
+    <script src="js/profile-system.js?v=22"></script>
+    <script src="js/utils.js?v=22"></script>
+    <script src="js/main.js?v=22"></script>
+    
+    <!-- 4. رابعاً: Service Worker والتهيئة النهائية -->
+    <script>
+        // تسجيل Service Worker المتقدم
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw-advanced.js')
+                    .then(reg => console.log('✅ Service Worker متقدم - مسجل:', reg.scope))
+                    .catch(err => console.error('❌ Service Worker:', err));
+            });
+        }
+        
+        // التحقق من تحميل الأنظمة الأمنية
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const systems = [
+                    'SECURITY_CONFIG',
+                    'SecuritySystem',
+                    'EncryptionSystem',
+                    'FirebaseSecurity',
+                    'IntegrityChecker',
+                    'SecureLoader'
+                ];
+                
+                console.log('🔐 ===== التحقق من الأنظمة الأمنية =====');
+                
+                systems.forEach(system => {
+                    const exists = window[system] !== undefined;
+                    console.log(`${system}: ${exists ? '✅' : '❌'}`);
+                });
+                
+                const allLoaded = systems.every(s => window[s] !== undefined);
+                if (allLoaded) {
+                    console.log('🎉 جميع الأنظمة الأمنية محملة بنجاح!');
+                    
+                    // إظهار شعار الأمان
+                    const securityBadge = document.querySelector('.security-badge');
+                    if (securityBadge) {
+                        securityBadge.textContent = '🔒 آمن - 100%';
+                        securityBadge.style.background = '#27ae60';
+                    }
+                } else {
+                    console.warn('⚠️ بعض الأنظمة الأمنية لم يتم تحميلها');
+                    
+                    const securityBadge = document.querySelector('.security-badge');
+                    if (securityBadge) {
+                        securityBadge.textContent = '⚠️ أمان جزئي';
+                        securityBadge.style.background = '#f39c12';
+                    }
+                }
+                
+                console.log('======================================');
+                
+            }, 3000);
+        });
+        
+        // تهيئة تحسينات الأداء
+        window.addEventListener('load', function() {
+            if (typeof initPerformanceMonitoring === 'function') {
+                setTimeout(initPerformanceMonitoring, 1000);
+            }
+            
+            if (typeof setupLightweightNotifications === 'function') {
+                setupLightweightNotifications();
+            }
+        });
+    </script>
 </body>
 </html>

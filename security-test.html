@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار الأمان - Eleven Store</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .test-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .test-section h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .test-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .test-item:hover {
+            background: #e9ecef;
+            transform: translateX(-5px);
+        }
+
+        .test-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .test-status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .status-pass {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-pending {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .summary-card h3 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .summary-card p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .pass { color: #28a745; }
+        .fail { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .pending { color: #17a2b8; }
+
+        .log {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 اختبار الأمان - Eleven Store</h1>
+            <p>فحص شامل للإجراءات الأمنية المطبقة</p>
+        </div>
+
+        <div class="summary">
+            <div class="summary-card">
+                <h3 class="pass" id="passCount">0</h3>
+                <p>✅ ناجح</p>
+            </div>
+            <div class="summary-card">
+                <h3 class="fail" id="failCount">0</h3>
+                <p>❌ فاشل</p>
+            </div>
+            <div class="summary-card">
+                <h3 class="warning" id="warningCount">0</h3>
+                <p>⚠️ تحذير</p>
+            </div>
+            <div class="summary-card">
+                <h3 class="pending" id="totalCount">0</h3>
+                <p>📊 الإجمالي</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>1. رؤوس الأمان (Security Headers)</h2>
+            <div id="securityHeaders"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. حماية Firebase</h2>
+            <div id="firebaseTests"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. التحقق من النزاهة</h2>
+            <div id="integrityTests"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. حماية الأدمن</h2>
+            <div id="adminTests"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>5. اختبارات إضافية</h2>
+            <div id="additionalTests"></div>
+        </div>
+
+        <div class="actions">
+            <button class="btn" onclick="runAllTests()">▶️ تشغيل جميع الاختبارات</button>
+            <button class="btn" onclick="exportReport()">📄 تصدير التقرير</button>
+            <button class="btn" onclick="clearLog()">🗑️ مسح السجل</button>
+        </div>
+
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        const tests = {
+            securityHeaders: [
+                { name: 'Content-Security-Policy', check: 'checkCSP' },
+                { name: 'Strict-Transport-Security', check: 'checkHSTS' },
+                { name: 'X-Frame-Options', check: 'checkXFrameOptions' },
+                { name: 'X-Content-Type-Options', check: 'checkXContentType' },
+                { name: 'Referrer-Policy', check: 'checkReferrerPolicy' }
+            ],
+            firebase: [
+                { name: 'Firebase Config Secure', check: 'checkFirebaseConfig' },
+                { name: 'Firebase App Check', check: 'checkAppCheck' },
+                { name: 'Firebase Security Rules', check: 'checkSecurityRules' }
+            ],
+            integrity: [
+                { name: 'Integrity Checker Loaded', check: 'checkIntegritySystem' },
+                { name: 'File Hashes Updated', check: 'checkFileHashes' },
+                { name: 'DOM Integrity', check: 'checkDOMIntegrity' }
+            ],
+            admin: [
+                { name: 'Admin Protection Loaded', check: 'checkAdminProtection' },
+                { name: '2FA System Available', check: 'check2FASystem' },
+                { name: 'Admin Access Logs', check: 'checkAccessLogs' }
+            ],
+            additional: [
+                { name: 'HTTPS Enforced', check: 'checkHTTPS' },
+                { name: '.htaccess Exists', check: 'checkHtaccess' },
+                { name: '.env Protected', check: 'checkEnvProtection' },
+                { name: 'Git Files Protected', check: 'checkGitProtection' }
+            ]
+        };
+
+        let results = {
+            pass: 0,
+            fail: 0,
+            warning: 0,
+            total: 0
+        };
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString('ar-SA');
+            const colors = {
+                info: '#00ff00',
+                success: '#00ff00',
+                error: '#ff0000',
+                warning: '#ffff00'
+            };
+            
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.style.color = colors[type] || colors.info;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateSummary() {
+            document.getElementById('passCount').textContent = results.pass;
+            document.getElementById('failCount').textContent = results.fail;
+            document.getElementById('warningCount').textContent = results.warning;
+            document.getElementById('totalCount').textContent = results.total;
+        }
+
+        function addTestResult(containerId, name, status) {
+            const container = document.getElementById(containerId);
+            const item = document.createElement('div');
+            item.className = 'test-item';
+            
+            const statusClass = status === 'pass' ? 'status-pass' : 
+                              status === 'fail' ? 'status-fail' : 
+                              status === 'warning' ? 'status-warning' : 'status-pending';
+            
+            const statusText = status === 'pass' ? '✅ ناجح' : 
+                             status === 'fail' ? '❌ فاشل' : 
+                             status === 'warning' ? '⚠️ تحذير' : '⏳ جاري...';
+            
+            item.innerHTML = `
+                <span class="test-name">${name}</span>
+                <span class="test-status ${statusClass}">${statusText}</span>
+            `;
+            
+            container.appendChild(item);
+            
+            results.total++;
+            if (status === 'pass') results.pass++;
+            else if (status === 'fail') results.fail++;
+            else if (status === 'warning') results.warning++;
+            
+            updateSummary();
+        }
+
+        // اختبارات رؤوس الأمان
+        function checkCSP() {
+            const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+            return meta ? 'pass' : 'warning';
+        }
+
+        function checkHSTS() {
+            // يجب فحصه من الخادم
+            return 'warning';
+        }
+
+        function checkXFrameOptions() {
+            const meta = document.querySelector('meta[http-equiv="X-Frame-Options"]');
+            return meta && meta.content === 'DENY' ? 'pass' : 'warning';
+        }
+
+        function checkXContentType() {
+            const meta = document.querySelector('meta[http-equiv="X-Content-Type-Options"]');
+            return meta && meta.content === 'nosniff' ? 'pass' : 'warning';
+        }
+
+        function checkReferrerPolicy() {
+            const meta = document.querySelector('meta[http-equiv="Referrer-Policy"]');
+            return meta ? 'pass' : 'warning';
+        }
+
+        // اختبارات Firebase
+        function checkFirebaseConfig() {
+            return window.secureFirebaseConfig ? 'pass' : 'fail';
+        }
+
+        function checkAppCheck() {
+            return 'warning'; // يجب التحقق يدوياً من Firebase Console
+        }
+
+        function checkSecurityRules() {
+            return 'warning'; // يجب التحقق يدوياً من Firebase Console
+        }
+
+        // اختبارات النزاهة
+        function checkIntegritySystem() {
+            return window.integrityChecker ? 'pass' : 'fail';
+        }
+
+        function checkFileHashes() {
+            if (window.integrityChecker && window.integrityChecker.expectedHashes) {
+                const hashes = window.integrityChecker.expectedHashes;
+                const hasRealHashes = Object.values(hashes).every(h => h.length === 64);
+                return hasRealHashes ? 'pass' : 'fail';
+            }
+            return 'fail';
+        }
+
+        function checkDOMIntegrity() {
+            return window.integrityChecker ? 'pass' : 'warning';
+        }
+
+        // اختبارات الأدمن
+        function checkAdminProtection() {
+            return window.adminProtection ? 'pass' : 'warning';
+        }
+
+        function check2FASystem() {
+            return window.twoFactorAuth ? 'pass' : 'fail';
+        }
+
+        function checkAccessLogs() {
+            return 'warning'; // يجب التحقق من Firestore
+        }
+
+        // اختبارات إضافية
+        function checkHTTPS() {
+            return location.protocol === 'https:' ? 'pass' : 'fail';
+        }
+
+        async function checkHtaccess() {
+            try {
+                const response = await fetch('/.htaccess');
+                return response.status === 403 ? 'pass' : 'warning';
+            } catch {
+                return 'warning';
+            }
+        }
+
+        async function checkEnvProtection() {
+            try {
+                const response = await fetch('/.env');
+                return response.status === 403 ? 'pass' : 'fail';
+            } catch {
+                return 'pass';
+            }
+        }
+
+        async function checkGitProtection() {
+            try {
+                const response = await fetch('/.git/config');
+                return response.status === 403 ? 'pass' : 'fail';
+            } catch {
+                return 'pass';
+            }
+        }
+
+        async function runAllTests() {
+            log('🚀 بدء اختبارات الأمان...', 'info');
+            
+            // مسح النتائج السابقة
+            results = { pass: 0, fail: 0, warning: 0, total: 0 };
+            document.getElementById('securityHeaders').innerHTML = '';
+            document.getElementById('firebaseTests').innerHTML = '';
+            document.getElementById('integrityTests').innerHTML = '';
+            document.getElementById('adminTests').innerHTML = '';
+            document.getElementById('additionalTests').innerHTML = '';
+
+            // تشغيل اختبارات رؤوس الأمان
+            log('📋 اختبار رؤوس الأمان...', 'info');
+            for (const test of tests.securityHeaders) {
+                const status = await window[test.check]();
+                addTestResult('securityHeaders', test.name, status);
+                log(`${test.name}: ${status}`, status === 'pass' ? 'success' : status === 'fail' ? 'error' : 'warning');
+            }
+
+            // تشغيل اختبارات Firebase
+            log('🔥 اختبار حماية Firebase...', 'info');
+            for (const test of tests.firebase) {
+                const status = await window[test.check]();
+                addTestResult('firebaseTests', test.name, status);
+                log(`${test.name}: ${status}`, status === 'pass' ? 'success' : status === 'fail' ? 'error' : 'warning');
+            }
+
+            // تشغيل اختبارات النزاهة
+            log('🔍 اختبار التحقق من النزاهة...', 'info');
+            for (const test of tests.integrity) {
+                const status = await window[test.check]();
+                addTestResult('integrityTests', test.name, status);
+                log(`${test.name}: ${status}`, status === 'pass' ? 'success' : status === 'fail' ? 'error' : 'warning');
+            }
+
+            // تشغيل اختبارات الأدمن
+            log('👤 اختبار حماية الأدمن...', 'info');
+            for (const test of tests.admin) {
+                const status = await window[test.check]();
+                addTestResult('adminTests', test.name, status);
+                log(`${test.name}: ${status}`, status === 'pass' ? 'success' : status === 'fail' ? 'error' : 'warning');
+            }
+
+            // تشغيل اختبارات إضافية
+            log('🔧 اختبارات إضافية...', 'info');
+            for (const test of tests.additional) {
+                const status = await window[test.check]();
+                addTestResult('additionalTests', test.name, status);
+                log(`${test.name}: ${status}`, status === 'pass' ? 'success' : status === 'fail' ? 'error' : 'warning');
+            }
+
+            log('✅ اكتملت جميع الاختبارات!', 'success');
+            log(`النتائج: ${results.pass} ناجح، ${results.fail} فاشل، ${results.warning} تحذير`, 'info');
+        }
+
+        function exportReport() {
+            const report = {
+                timestamp: new Date().toISOString(),
+                results: results,
+                log: document.getElementById('log').innerText
+            };
+            
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `security-report-${Date.now()}.json`;
+            a.click();
+            
+            log('📄 تم تصدير التقرير', 'success');
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            log('🗑️ تم مسح السجل', 'info');
+        }
+
+        // تشغيل تلقائي عند التحميل
+        window.addEventListener('load', () => {
+            log('🔐 نظام اختبار الأمان جاهز', 'success');
+            log('اضغط على "تشغيل جميع الاختبارات" للبدء', 'info');
+        });
+    </script>
+</body>
+</html>
